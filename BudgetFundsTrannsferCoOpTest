@@ -1,0 +1,40 @@
+@isTest
+public class BudgetFundsTrannsferCoOpTest {
+    
+    @isTest
+    static void testMe(){
+        
+        Budget__c bud1 = new Budget__c();
+        bud1.Name = 'Budget 1';
+        bud1.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Parent Budget').getRecordTypeId();
+        bud1.Status__c = 'Approved';
+        bud1.Type__c = 'Co-Op Discretionary';
+        bud1.Amount__c = 100000;
+        bud1.OwnerId = [Select Id, Name from User where Name = 'Seabourn Test User'].Id;
+        bud1.Start_Date__c = System.today();
+        
+        insert bud1;
+        
+        Budget__c bud2 = new Budget__c();
+        bud2.Name = 'Budget 2';
+        bud2.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Other Budget').getRecordTypeId();
+        bud2.Status__c = 'Approved';
+        bud2.Type__c = 'Co-Op Discretionary';
+        bud2.Amount__c = 100;
+        bud2.OwnerId = [Select Id, Name from User where Name = 'Alycia Oliphant'].Id;
+        bud2.Start_Date__c = System.today();
+        bud2.Parent_Budget__c = bud1.Id;
+        
+        insert bud2;
+        
+        System.assertEquals(true, BudgetsFundsTransferCoOpToParent.checkForParentRecord(bud2.Id));
+        System.assertEquals(99900, BudgetsFundsTransferCoOpToParent.getRemainingAmount(bud1.Id));
+        System.assertEquals(bud2.Id, BudgetsFundsTransferCoOpToParent.transferFunds(bud2.Id, 100, 'Thanks'));
+
+ 
+
+        
+        
+    }
+
+}
