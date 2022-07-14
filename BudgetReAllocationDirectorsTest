@@ -1,0 +1,140 @@
+@isTest
+public class BudgetReAllocationAmountUpdationTest {
+    
+    @isTest
+    static void testMe(){
+        
+        Budget__c bud1 = new Budget__c();
+        bud1.Name = 'Budget 1';
+        bud1.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Parent Budget').getRecordTypeId();
+        bud1.Status__c = 'Approved';
+        bud1.Type__c = 'Co-Op Discretionary';
+        bud1.Amount__c = 100000;
+        bud1.OwnerId = [Select Id, Name from User where Name = 'Seabourn Test User'].Id;
+        bud1.Start_Date__c = System.today();
+        
+        insert bud1;
+        
+        Budget__c bud2 = new Budget__c();
+        bud2.Name = 'Budget 2';
+        bud2.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Cunard Other Budget').getRecordTypeId();
+        bud2.Status__c = 'Approved';
+        bud2.Type__c = 'Co-Op Discretionary';
+        bud2.Amount__c = 100;
+        bud2.OwnerId = [Select Id, Name from User where Name = 'Cunard Test User'].Id;
+        bud2.Start_Date__c = System.today();
+        
+        insert bud2;
+
+        List<String> ids1 = new List<String>();
+        
+        ids1.add('0055f000007vXrlAAE');
+        ids1.add('0055f000009AFvqAAG');
+        ids1.add('0055f000009AFvYAAW');
+        ids1.add('0055f000007vXrMAAU');
+        //ids1.add([Select Id, Name from User where Name = 'Cunard Test User'].Id);
+        //ids1.add('0055f000009AFvYAAW');
+        // (0055f000007vXrlAAE, 0055f000009AFvqAAG, 0055f000009AFvYAAW, 0055f000007vXrMAAU) 
+        System.assertEquals(true, BudgetReallocationDirectorsApex.checkUserForDirector([Select Id, Name from User where Name = 'Holland Test User'].Id));
+        //System.assertEquals(false, BudgetReallocationDirectorsApex.checkUserForSales([Select Id, Name from User where Name = 'Holland Test User'].Id, bud1.Id));
+        //(0058C000000SUn0QAG, 0058C000000TICBQA4, 0058C000000SW7EQAW)
+        System.assertEquals(ids1, BudgetReallocationDirectorsApex.getRoleSubordinateUsers([Select Id, Name from User where Name = 'Seabourn Test User'].Id) );
+        System.assertEquals(100000, BudgetReallocationDirectorsApex.getRemainingAmount(bud1.Id));
+       // System.assertEquals(true, BudgetReallocationDirectorsApex.checkUserForDirector([Select Id, Name from User where Name = 'Seabourn Test User'].Id));
+        //System.assertEquals(false, BudgetReallocationDirectorsApex.checkUserForNoProfile([Select Id, Name from User where Name = 'Seabourn Test User'].Id));
+        System.assertEquals(false, BudgetReallocationDirectorsApex.checkUserForSales([Select Id, Name from User where Name = 'Seabourn Test User'].Id, bud1.Id));
+        
+        //System.assertEquals(true, BudgetReAllocationDirectorsApex.checkUserForDirector(bud2.OwnerId));
+        System.assertEquals(true, BudgetReAllocationDirectorsApex.checkForManagerRecord(bud1.Id, bud1.OwnerId));
+
+        //Test.startTest();
+        //System.debug(BudgetReallocationDirectorsApex.transferFunds(bud1.Id, 100 , [Select Id, Name from User where Name = 'Alycia Oliphant'].Id));
+        //Test.stopTest();
+        
+       // System.assertEquals(bud1.Id, BudgetReallocationDirectorsApex.transferFunds(bud1.Id, 100 , [Select Id, Name from User where Name = 'Alycia Oliphant'].Id));
+        
+        //User us = [SELECT Id, Name, ProfileId FROM User where Id =: bud1.OwnerId];
+        //String profileName = [Select Name from Profile where Id =: us.ProfileId].Name;
+        
+        //System.assertEquals('Seabourn Sales Director/Manager', profileName);
+        //System.assertEquals(99900, bud1.Amount__c);
+        //System.assertEquals(100, bud1.Total_Funds_Transferred_Out__c);
+        //System.assertEquals(100, bud2.Total_Funds_Transferred_In__c);
+        //
+        
+        Budget__c bud3 = new Budget__c();
+        bud3.Name = 'Budget 3';
+        bud3.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Parent Budget').getRecordTypeId();
+        bud3.Status__c = 'Approved';
+        bud3.Type__c = 'Co-Op';
+        bud3.Amount__c = 100;
+        bud3.OwnerId = [Select Id, Name from User where Name = 'Alycia Oliphant'].Id;
+        bud3.Start_Date__c = System.today();
+        
+        insert bud3;
+        
+        Budget__c bud4 = new Budget__c();
+        bud4.Name = 'Budget 2';
+        bud4.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Parent Budget').getRecordTypeId();
+        bud4.Status__c = 'Approved';
+        bud4.Type__c = 'Co-Op';
+        bud4.Amount__c = 100;
+        bud4.OwnerId = [Select Id, Name from User where Name = 'Princess Test User'].Id;
+        bud4.Start_Date__c = System.today();
+        
+        insert bud4;
+        
+        System.assertEquals(bud4.Id, BudgetReallocationDirectorsApex.transferFunds(bud4.Id, 10 , [Select Id, Name from User where Name = 'Alycia Oliphant'].Id, 'Thanks'));
+        
+        Budget__c bud6 = new Budget__c();
+        bud6.Name = 'Budget 2';
+        bud6.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Holland Parent Budget').getRecordTypeId();
+        bud6.Status__c = 'Approved';
+        bud6.Type__c = 'Co-Op';
+        bud6.Amount__c = 100;
+        bud6.OwnerId = [Select Id, Name from User where Name = 'Holland Test User'].Id;
+        bud6.Start_Date__c = System.today();
+        
+        insert bud6;
+        
+        Budget__c bud7 = new Budget__c();
+        bud7.Name = 'Budget 7';
+        bud7.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Holland Parent Budget').getRecordTypeId();
+        bud7.Status__c = 'Approved';
+        bud7.Type__c = 'Co-Op';
+        bud7.Amount__c = 100;
+        bud7.OwnerId = [Select Id, Name from User where Name = 'Margo Beam'].Id;
+        bud7.Start_Date__c = System.today();
+        
+        insert bud7;
+        
+        Budget__c bud8 = new Budget__c();
+        bud8.Name = 'Budget 8';
+        bud8.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Seabourn Parent Budget').getRecordTypeId();
+        bud8.Status__c = 'Approved';
+        bud8.Type__c = 'Co-Op';
+        bud8.Amount__c = 100000;
+        bud8.OwnerId = [Select Id, Name from User where Name = 'Nathan Burdulis'].Id;
+        bud8.Start_Date__c = System.today();
+        
+        insert bud8;
+        
+        Budget__c bud9 = new Budget__c();
+        bud9.Name = 'Budget 9';
+        bud9.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Seabourn Parent Budget').getRecordTypeId();
+        bud9.Status__c = 'Approved';
+        bud9.Type__c = 'Co-Op';
+        bud9.Amount__c = 100000;
+        bud9.OwnerId = [Select Id, Name from User where Name = 'Seabourn Test User'].Id;
+        bud9.Start_Date__c = System.today();
+        
+        insert bud9;
+        
+        
+        System.assertEquals(true, BudgetReallocationDirectorsApex.checkDirectTransfer(bud1.Id));
+       System.assertEquals(bud6.Id, BudgetReallocationDirectorsApex.transferFunds(bud6.Id, 10 , [Select Id, Name from User where Name = 'Margo Beam'].Id,'Thanks'));
+        System.assertEquals(bud9.Id, BudgetReallocationDirectorsApex.transferFunds(bud9.Id, 10 , [Select Id, Name from User where Name = 'Nathan Burdulis'].Id, 'Thanks'));
+        //System.assertEquals(bud3.Id, BudgetReallocationDirectorsApex.transferFunds(bud3.Id, 10 , [Select Id, Name from User where Name = 'Amanda Jordan'].Id));
+    }
+
+}
