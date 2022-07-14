@@ -1,0 +1,134 @@
+public class SK_AccountTreeGridCmpController {
+
+     
+  @AuraEnabled
+    public static List<AccountAccountRelationship__c> findHierarchyData(string recId, String brandValue){
+        List<AccountAccountRelationship__c> accList = new List<AccountAccountRelationship__c>();
+        string queryString = 'Select Id ,Account__r.Id , RecordType__c , Account__r.Name, Account__r.Status__c, Account__r.Type, Account__r.BillingCity , Account__r.BillingState, Account__r.BillingStreet, Account__r.BillingPostalCode , ParentAccount__r.Id, Account__r.Region_District_Code_PC__c, Account__r.Region_District_Code_CU__c, Account__r.Region_District_Code_HA__c , Account__r.Region_District_Code_SB__c , ParentAccount__r.Name, Account__r.ShippingCity, Account__r.ShippingState, Account__r.ShippingStreet, Account__r.ShippingPostalCode, Account__r.Agency_ID__c from AccountAccountRelationship__c' ;
+        //Section to get all child account details from ultimate parent starts-------------------------
+        List<String> currentParent      = new List<String>{};
+        Integer level               = 0;
+        Boolean endOfStructure      = false; 
+        //method to find ultimate parent of account
+        string topMostparent = GetUltimateParentId(recId,brandValue);
+        //system.debug('*******topMostparent:'+[Select Name from Account where Id=:topMostparent].Name);  
+        currentParent.add(topMostparent);
+        //system.debug(currentParent);  
+        //system.debug('**********topMostparent:'+ currentParent);  
+        //Loop though all children
+        string finalQueryString = '';
+        List<AccountAccountRelationship__c>  queryOutput = new List<AccountAccountRelationship__c> ();
+        List<String> dupIds = new List<String>();
+        while ( !endOfStructure ){  
+            if( level == 0 ){
+                finalQueryString = queryString + ' where RecordType__c =: brandValue AND Account__r.Id IN : CurrentParent  ORDER BY ParentAccount__r.Id  Limit 1000';
+            } 
+            else {
+                finalQueryString = queryString + ' where RecordType__c =: brandValue AND ParentAccount__r.Id IN : CurrentParent ORDER BY ParentAccount__r.Id Limit 1000';
+            }
+            //system.debug('********finalQueryString:'+finalQueryString); 
+            if(finalQueryString != null && finalQueryString !=''){
+                
+                //System.debug(Limits.getLimitQueries());
+                //System.debug(Limits.getQueries());
+                try{
+                    if(Limits.getLimitQueries()-Limits.getQueries()>0){
+                        queryOutput = database.query(finalQueryString);
+                        //System.debug('=====');
+                        //system.debug('***hierarchy level:'+level); 
+                    }else{
+                        // system.debug('****endOfStructure is true as SOQL limit reaches:'); -
+                        endOfStructure = true;
+                    }
+                }catch(exception ex){ 
+                    endOfStructure = true;
+                    System.debug('Hitting GL ************************************************************');
+                }
+            }
+            //system.debug('**queryOutput size:'+queryOutput); 
+            if( queryOutput.size() == 0 ){
+                endOfStructure = true;
+            }
+            else{
+                currentParent.clear();
+                //iterating through query output
+                for ( Integer i = 0 ; i < queryOutput.size(); i++ ){
+                    currentParent.add(queryOutput[i].Account__r.Id);
+                    //system.debug('*******topMostparent:'+[SELECT ID,Name from Account where Id=:queryOutput[i].Account__r.Id]);  
+                    accList.add(queryOutput[i]);
+                    dupIds.add(queryOutput[i].Id);
+                 }
+            }
+            level++;
+        }
+        //system.debug('**********accList:'+accList); 
+        //String profileName = [Select Name from Profile where Id =: userinfo.getProfileid()].name;
+        //System.debug(profileName);
+        List<AccountAccountRelationship__c>  finalAccList = new List<AccountAccountRelationship__c> ();
+        List<String> unDupIds = new List<String>();
+        List<String> unDupIds1 = new List<String>();
+        for(AccountAccountRelationship__c i : accList){
+            if(unDupIds.contains(i.Id) || (unDupIds1.contains(i.Account__c) && i.ParentAccount__c == null)){
+                continue;
+            }
+            else{
+                finalAccList.add(i);
+                unDupIds.add(i.Id);
+                unDupIds1.add(i.Account__c);
+            }
+        }
+        System.debug(finalAccList.size());
+        System.debug(accList.size());
+        return finalAccList;
+    }
+
+    // Find the tom most element in Heirarchy  
+    // @return objId
+    public static String GetUltimateParentId( string recId, String brandValue ){
+        Boolean top = false;
+        while ( !top ) {
+            string queryString = 'Select Id ,Account__r.Id ,Account__r.Name , ParentAccount__r.Id from AccountAccountRelationship__c where Account__r.Id =:recId AND RecordType__c =: brandValue LIMIT 1';
+            AccountAccountRelationship__c  acc = database.query(queryString);
+            if (acc.ParentAccount__r.Id  != null ) {
+                recId = acc.ParentAccount__r.Id;
+            }else {
+                top = true;
+            }
+        }
+        //System.debug([Select Id,Name from Account Where Id=:recId]);
+        return recId ;
+    }
+    
+    @AuraEnabled
+    public static String getName(Id recId){
+        return [SELECT Id,Name from Account where Id=:recId].Name;
+     
+    }
+    
+    @AuraEnabled
+    public static String getBrandSelected(){
+        String brandValuesSelected = [Select Brand__c from User where Id=:userinfo.getUserId()].Brand__c;
+        return brandValuesSelected;
+    }
+    
+    
+    @AuraEnabled
+    public static List<String> getBrands(){
+        List<String> brands = new List<String>();
+        String userBrands = [Select Name, Brand__c from User where Id =: userinfo.getUserid()].Brand__c;
+        if(userBrands.contains('PC')){
+            brands.add('Princess');
+        }
+        if(userBrands.contains('CU')){
+             brands.add('Cunard');
+        }
+        if(userBrands.contains('SB')){
+             brands.add('Seabourn');
+        }
+        if(userBrands.contains('HA')){
+             brands.add('Holland');
+        }
+        return brands;        
+    }
+
+}
