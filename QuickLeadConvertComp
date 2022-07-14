@@ -1,0 +1,34 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,force:lightningQuickAction,force:hasRecordId" controller="QuickLeadConvert">
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="doOpp" type="Boolean" description="Create Opportunity during Lead Conversion" />
+    <aura:attribute name="checkcompanyname" type="Boolean" />
+    <aura:attribute name="displaycomponent" type="Boolean" />
+    <aura:attribute name="convertedSuccess" type="Boolean" default = "false"/>
+    <aura:attribute name="navigate" type="Boolean" default="false"/>
+    <aura:attribute name="accountId" type="String"/>
+    <aura:attribute name="contactId" type="String"/>
+    <!--  <aura:handler name="init" value="{!this}" action="{!c.init}" /> -->
+	<aura:handler name="init" value="{!this}" action="{!c.init}" />
+    <aura:if isTrue="{!v.displaycomponent}">
+        
+        <div class="slds-align--absolute-center">
+            <h3 class="slds-section-title--divider">Click next to take ownership of this record.</h3>
+            <br/>
+        </div>
+        <br/>
+		<button class="slds-button slds-button_brand slds-align_absolute-center" onclick="{!c.ConvertIt}">Next</button>
+        
+    	<aura:set attribute="else">
+        	<aura:if isTrue="{!v.checkcompanyname}"> 
+				<ui:message title="Error" severity="error" closable="true">
+					You must have the true name of the agency populated to accept this record.
+				</ui:message>        
+
+    	   		<aura:set attribute="else">
+					<p> </p>
+    	   		</aura:set>
+  	    	</aura:if> 
+    	</aura:set>
+  	</aura:if> 
+    
+</aura:component>
