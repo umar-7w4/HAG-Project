@@ -1,0 +1,193 @@
+public without sharing class BudgetAllocationApex{
+    
+    public static List<Id> userIds = new List<Id>();
+    
+    @AuraEnabled
+    public static List<String> getRoleSubordinateUsers(String budgetId) {
+        
+        Id userId = [Select Id, OwnerId from Budget__c where Id = : budgetId].OwnerId;
+        System.debug(userId);
+        
+        Id roleId = [SELECT UserRoleId From User Where Id = :userId].UserRoleId;
+        Set<Id> allSubRoleIds = getAllSubRoleIds(New Set<ID>{roleId});
+        List<String> ans = new List<String>();
+        ans.add([Select Id , Name from User where Id = : userId].Name);
+        userIds.add(userId);
+        for(User i : [SELECT Id, Name From User where UserRoleId IN : allSubRoleIds AND IsActive = True]){
+            ans.add(i.Name);
+            userIds.add(i.Id);
+        }
+        return ans;
+    }
+    
+    public static Set<ID> getAllSubRoleIds(Set<ID> roleIds) {
+        
+        Set<ID> currentRoleIds = new Set<ID>();
+        List<String> names = new List<String>();
+
+        for(UserRole userRole :[SELECT Id , Name from UserRole Where ParentRoleId IN :roleIds AND ParentRoleID != null]){
+            currentRoleIds.add(userRole.Id);
+            names.add(userRole.Name);
+        }
+
+        if(currentRoleIds.size() > 0){
+            currentRoleIds.addAll(getAllSubRoleIds(currentRoleIds));
+        } 
+        return currentRoleIds;   
+    }
+    
+    public static boolean checkExistingBudgetWithOwner(String oId, String typeValue, String year, String parentId, String rType){
+        List<Budget__c> buds = [Select Id, OwnerId, Name, Fund__c, Type__c, Start_Date__c, End_Date__c, Year__c, Brand__c, CurrencyIsoCode, Parent_Budget__c, RecordTypeId from Budget__c];
+        for(Budget__c i : buds){
+            if(i.OwnerId == oId && i.Type__c == typeValue && i.Year__c == year && i.Parent_Budget__c == parentId && i.RecordTypeId == rType){
+                //System.debug(i.OwnerId+' '+i.Parent_Budget__c+' '+i.Type__c+' '+i.RecordTypeId);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    @AuraEnabled
+    public static String createChildBudgets(String budgetId, Map<Id, Double> userIdsAmounts){
+        Budget__c bud = [Select Id, OwnerId, Name, Status__c, Fund__c, Type__c, Created_During_Allocation_Process__c, RecordType__c, Start_Date__c, End_Date__c, Year__c, Brand__c, CurrencyIsoCode, Amount__c, Remaining_Budget__c, Total_Committed_Amount__c, Parent_Budget__c from Budget__c where Id =: budgetId];
+        List<Budget__c> childBudsInsert = new List<Budget__c>();
+        List<Budget__c> childBudsUpdate = new List<Budget__c>();
+        List<String> insIds = new List<String>();
+        Double remBud = bud.Amount__c;
+        Double temp = 0;
+        Double addOff = 0;
+        //System.debug(userIdsAmounts.get(UserInfo.getUserId()));
+        String rcType = '';
+        if(bud.RecordType__c == 'Princess Parent Budget'){
+           rcType = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Other Budget').getRecordTypeId();
+        }
+        else if(bud.RecordType__c == 'Cunard Parent Budget'){
+           rcType = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Cunard Other Budget').getRecordTypeId();
+        }
+        else if(bud.RecordType__c == 'Holland Parent Budget'){
+           rcType = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Holland Other Budget').getRecordTypeId();
+        }
+        else if(bud.RecordType__c == 'Seabourn Parent Budget'){
+           rcType = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Seabourn Other Budget').getRecordTypeId();
+        }
+        for(Id i : userIdsAmounts.keySet()){
+            temp+=userIdsAmounts.get(i);
+        }
+        System.debug(bud.Amount__c+' '+temp);
+        System.debug(rcType);
+        if(bud.Amount__c>=temp && bud.Status__c == 'Approved'){
+           for(Id i : userIdsAmounts.keySet()){
+               if(checkExistingBudgetWithOwner(i, bud.Type__c, bud.Year__c, bud.Id, rcType)){
+                    Budget__c exBud = [Select Id, Fund__c, Created_During_Allocation_Process__c, Owner.Name, OwnerId, Name, Type__c, Start_Date__c, End_Date__c, Year__c, Brand__c, CurrencyIsoCode, Amount__c, Remaining_Budget__c From Budget__c where OwnerId =:i AND Type__c =: bud.Type__c AND Year__c =: bud.Year__c AND Parent_Budget__c =: bud.Id Limit 1 ];
+                    exBud.Name = exBud.Owner.Name+' - '+exBud.Year__c+' - '+exBud.Type__c+' Budget';
+                    exBud.Amount__c += userIdsAmounts.get(i);
+                    exBud.Status__c = 'Approved';
+                    exBud.Fund__c = bud.Fund__c;
+                    remBud -= userIdsAmounts.get(i);
+                    addOff+=userIdsAmounts.get(i);
+                    exBud.Created_During_Allocation_Process__c = true;
+                    exBud.Automation_Date_Time__c = datetime.now();
+                    childBudsUpdate.add(exBud);
+                }
+                else{
+                    remBud -= userIdsAmounts.get(i);
+                    addOff+=userIdsAmounts.get(i);
+                    //insIds.add(i);
+                    /*
+                    String userNameForBudget = '';
+                    try{
+                        if(Limits.getLimitQueries()-Limits.getQueries()>0){
+                            userNameForBudget = [Select Id, Name from User where Id = : i].Name;
+                        }
+                    }catch(exception ex){ 
+                        System.debug('Queries Limit exceeded');
+                    }
+                    String newBudgetName = userNameForBudget+' - '+bud.Year__c+' - '+bud.Type__c+' Budget';
+                    */
+                    childBudsInsert.add(new Budget__c(Name = bud.Name , Created_During_Allocation_Process__c = true, Fund__c = bud.Fund__c, OwnerId = i, Type__c = bud.Type__c, Start_Date__c = bud.Start_Date__c, Status__c = 'Approved', Automation_Date_Time__c = datetime.now(),  Brand__c = bud.Brand__c, Parent_Budget__c = bud.Id, RecordTypeId = rcType ,CurrencyIsoCode = bud.CurrencyIsoCode , Amount__c = userIdsAmounts.get(i)));
+                }
+                bud.Automation_Date_Time__c = datetime.now();
+                
+            }
+        }
+        else{
+            System.debug('Not Possible');
+        }
+        bud.Amount__c -= addOff;
+        
+        /*
+        List<User> insUsers = [Select Id, Name from User where Id =:insIds ];
+        List<String> names = new List<String>();
+        for(User i : insUsers){
+            names.add(i.Name);
+        }
+        for(Integer i = 0;i<childBudsInsert.size();i++){
+            Budget__c tem = childBudsInsert[i];
+            tem.Name = names[i]+' - '+bud.Year__c+' - '+tem.Type__c+' Budget';
+            System.debug(tem.Name);
+        }
+        */
+        
+        try{
+            insert childBudsInsert;
+            update childBudsUpdate;
+            update bud;
+        }
+        Catch(Exception e){
+            System.debug(e.getMessage());
+        }
+        
+        System.debug(childBudsInsert);
+        
+        List<String> insertIds = new List<String>();
+        for(Budget__c i : childBudsInsert ){
+            insertIds.add(i.Id);
+        }
+        List<Budget__c> budsForInsert = [Select Id, Name , Fund__c, Owner.Name, Year__c, Type__c from Budget__c where Id IN : insertIds];
+        
+        List<Budget__c> finalUp = new List<Budget__c>();
+        for(Budget__c i : budsForInsert){
+            i.Name = i.Owner.Name+' - '+i.Year__c+' - '+i.Type__c+' Budget';
+            finalUp.add(i);
+        }
+        try{
+            update finalUp;
+        }
+        Catch(Exception e){
+            System.debug(e.getMessage());
+        }
+        
+        System.debug('Comitted amount '+addOff);
+        System.debug(finalUp);
+        //System.debug(childBudsUpdate);
+        return budgetId;
+    }
+    
+    @AuraEnabled
+    public static List<String> getUserIds(String budgetId){        
+        List<String> ans = new List<String>();
+        
+        Id userId = [Select Id, OwnerId from Budget__c where Id = : budgetId].OwnerId;
+        System.debug(userId);
+        
+        Id roleId = [SELECT UserRoleId From User Where Id = :userId].UserRoleId;
+        Set<Id> allSubRoleIds = getAllSubRoleIds(New Set<ID>{roleId});
+        ans.add([Select Id , Name from User where Id = : userId].Id);
+        for(User i : [SELECT Id, Name From User where UserRoleId IN : allSubRoleIds AND IsActive = True]){
+            ans.add(i.Id);
+        }
+        return ans;
+    }
+
+    @AuraEnabled    
+    public static Double getRemainingAmount(String budgetId){
+        return [Select Id, Name, Amount__c from Budget__c Where Id =: budgetId].Amount__c;
+    }
+    
+    @AuraEnabled    
+    public static String getStatus(String budgetId){
+        return [Select Id, Name, Status__c from Budget__c Where Id =: budgetId].Status__c;
+    }
+    
+
+}
