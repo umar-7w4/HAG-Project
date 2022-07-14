@@ -1,0 +1,198 @@
+public without sharing class BudgetReallocationDirectorsApex {
+    
+    @AuraEnabled
+    public static List<String> getRoleSubordinateUsers(String userId) {
+        
+        Id roleId = [SELECT UserRoleId From User Where Id = :userId].UserRoleId;
+        Set<Id> allSubRoleIds = BudgetAllocationApex.getAllSubRoleIds(New Set<ID>{roleId});
+        List<String> ans = new List<String>();
+        ans.add([Select Id , Name from User where Id = : userId].Id);
+        for(User i : [SELECT Id, Name From User where UserRoleId IN : allSubRoleIds AND IsActive = True]){
+            ans.add(i.Id);
+        }
+        return ans;
+    }
+    
+    @AuraEnabled
+    public static boolean checkDirectTransfer(String budgetId){
+        String oId = [Select Id, OwnerId from Budget__c where Id =: budgetId].OwnerId;
+        User us = [SELECT Id, Name, ProfileId FROM User where Id =: oId];
+        if([Select Name from Profile where Id =: us.ProfileId].Name.contains('Seabourn')){
+            return true;
+        }
+        return false;
+    }
+    
+    @AuraEnabled
+    public static boolean checkUserForDirector(String userId) {
+        User us = [SELECT Id, Name, ProfileId FROM User where Id =: userId];
+        if([Select Name from Profile where Id =: us.ProfileId].Name.contains('Sales Director/Manager') || [Select Name from Profile where Id =: us.ProfileId].Name.contains('Sales Leadership')){
+            return true;
+        }
+        return false;
+    }
+    
+    @AuraEnabled
+    public static boolean checkUserForSales(String userId, String budgetId) {
+        Id owner = [Select Id, OwnerId from Budget__c where Id = : budgetId].OwnerId;
+        User us = [SELECT Id, Name, ProfileId FROM User where Id =: userId];
+        //System.debug(userId);
+        //System.debug(getRoleSubordinateUsers(owner));
+        //System.debug(profileName);
+        if([Select Name from Profile where Id =: us.ProfileId].Name.contains('Sales User') && getRoleSubordinateUsers(owner).contains(userId)){
+            return true;
+        }
+        return false;
+    }
+    
+    @AuraEnabled    
+    public static Double getRemainingAmount(String budgetId){
+        return [Select Id, Name, Amount__c from Budget__c Where Id =: budgetId].Amount__c;
+    }
+    
+    @AuraEnabled    
+    public static boolean checkForManagerRecord(String budgetId, String userId){
+        Budget__c bud = [Select Id, OwnerId, Name, Type__c, RecordType__c, Status__c, Year__c, Brand__c, CurrencyIsoCode, Amount__c, Total_Funds_Transferred_Out__c, Remaining_Budget__c, Total_Committed_Amount__c, Parent_Budget__c from Budget__c where Id =: budgetId];
+        //User manager = [Select Id, Name, ManagerId from User where Id = : bud.OwnerId];
+        List<Budget__c> buds = [Select Id, Name, OwnerId, Type__c, Amount__c, Total_Funds_Transferred_In__c, Year__c, Status__c , Brand__c, RecordType__c, Parent_Budget__c from Budget__c where Brand__c = : bud.Brand__c AND RecordType__c = : bud.RecordType__c AND OwnerId =: userId AND Type__c =: bud.Type__c AND Year__c =: bud.Year__c AND Status__c =: 'Approved'];
+        //System.debug(buds.size()+' '+buds[0].Status__c+' '+bud.Status__c+' '+bud.Amount__c);
+        if(buds.size()>0 && buds[0].Status__c == 'Approved'){
+            return true;
+        }
+        return false;
+    }
+    
+    @AuraEnabled
+    public static String transferFunds(String budgetId, Double amount, String userId, String comments) {
+        //System.debug(amount);
+        Budget__c bud = [Select Id, Automation_Date_Time__c, OwnerId, Name, Type__c, RecordType__c, Status__c, Year__c, Brand__c, CurrencyIsoCode, Amount__c, Total_Funds_Transferred_Out__c, Remaining_Budget__c, Total_Committed_Amount__c, Parent_Budget__c from Budget__c where Id =: budgetId];
+        //User manager = [Select Id, Name, ManagerId from User where Id = : bud.OwnerId];
+        List<Budget__c> buds = [Select Id, Name, OwnerId, Type__c, Brand__c, Amount__c, Total_Funds_Transferred_In__c, Year__c, Status__c , RecordType__c, Parent_Budget__c from Budget__c where RecordType__c = : bud.RecordType__c AND OwnerId =: userId AND Type__c =: bud.Type__c AND Year__c =: bud.Year__c AND Status__c =: 'Approved'];
+        Funds_Transfer__c fund = new Funds_Transfer__c();
+        Double add1 = 0;
+        Double add2 = 0;
+        
+        User us = [SELECT Id, Name, ProfileId FROM User where Id =: bud.OwnerId];
+        String profileName = [Select Name from Profile where Id =: us.ProfileId].Name;
+        
+        List<String> princessApprovers = new List<String>();
+        princessApprovers.add([Select Id, Name from user where Name = 'Jessica Martinez'].Id);
+        princessApprovers.add([Select Id, Name from user where Name = 'Terry Lemay'].Id);
+        List<String> cunardApprovers = new List<String>();
+        cunardApprovers.add([Select Id, Name from user where Name = 'Jamie Paiko'].Id);
+        List<String> hollandApprovers = new List<String>();
+        hollandApprovers.add([Select Id, Name from user where Name = 'Edward Pardo'].Id);
+        //System.debug(buds.size()+' '+bud.Amount__c+' '+amount+' '+bud.Status__c);
+        if(buds.size()>0 && bud.Amount__c>=amount && bud.Status__c == 'Approved' && bud.Brand__c == buds[0].Brand__c && comments!=null && comments != ''){
+            System.debug('**********');
+            if((profileName.contains('Seabourn') && checkUserForDirector(buds[0].OwnerId)) || checkUserForSales(buds[0].OwnerId, budgetId)){
+                fund.Amount__c = amount;
+                fund.Sending_Budget__c = budgetId;
+                fund.Receiving_Budget__c = buds[0].Id;
+                fund.Sent_By__c = bud.OwnerId;
+                fund.Received_By__c = buds[0].OwnerId;
+                fund.Status__c = 'Complete';
+                fund.Comments__c = comments;
+                
+                buds[0].Amount__c += amount;
+                
+                if(buds[0].Total_Funds_Transferred_In__c==null){
+                    add1 = 0 + amount;
+                }
+                else{
+                    add1 = buds[0].Total_Funds_Transferred_In__c + amount;
+                }
+                buds[0].Total_Funds_Transferred_In__c  = add1;
+                
+                bud.Amount__c -= amount;
+                
+                if(bud.Total_Funds_Transferred_Out__c==null){
+                    add2 = 0 + amount;
+                }
+                else{
+                    add2 = bud.Total_Funds_Transferred_Out__c+ amount;
+                }
+                bud.Total_Funds_Transferred_Out__c = add2;
+                System.debug('Transfer Complete');
+                
+                bud.Automation_Date_Time__c = datetime.now();
+                buds[0].Automation_Date_Time__c = datetime.now();
+                
+            }
+            else if(profileName.contains('Princess')){
+                fund.Amount__c = amount;
+                fund.Sending_Budget__c = budgetId;
+                fund.Receiving_Budget__c = buds[0].Id;
+                fund.Sent_By__c = bud.OwnerId;
+                fund.Received_By__c = buds[0].OwnerId;
+                fund.Comments__c = comments;
+            }
+            else if(profileName.contains('Cunard')){
+                fund.Amount__c = amount;
+                fund.Sending_Budget__c = budgetId;
+                fund.Receiving_Budget__c = buds[0].Id;
+                fund.Sent_By__c = bud.OwnerId;
+                fund.Received_By__c = buds[0].OwnerId;
+                fund.Comments__c = comments;
+            }
+            else if(profileName.contains('Holland')){
+                System.debug('======');
+                fund.Amount__c = amount;
+                fund.Sending_Budget__c = budgetId;
+                fund.Receiving_Budget__c = buds[0].Id;
+                fund.Sent_By__c = bud.OwnerId;
+                fund.Received_By__c = buds[0].OwnerId;    
+                fund.Comments__c = comments;
+            }
+  
+        }
+        //System.debug(buds[0]);
+        //System.debug(bud);
+        //System.debug('=='+fund);
+        try{
+            insert fund;
+            update buds;
+            update bud;
+        }
+        Catch(Exception e){
+            System.debug(e.getMessage());
+        }
+        
+		if( (profileName == 'Princess Sales Director/Manager' || profileName == 'Princess Sales Leadership') &&  checkUserForDirector(userId)){
+            Approval.ProcessSubmitRequest req1 = new Approval.ProcessSubmitRequest();
+            req1.setComments('Submitting transfer fund record for approval.');
+            req1.setObjectId(fund.Id);
+            req1.setSubmitterId(bud.OwnerId); 
+            req1.setNextApproverIds(princessApprovers);
+            req1.setSkipEntryCriteria(true);
+            req1.setProcessDefinitionNameOrId('Princess_Director_Leadership_Funds_Tran');
+            Approval.ProcessResult result = Approval.process(req1);
+            System.debug('Princess Fund transfer Submitted for Approval');     
+        }
+        else if( (profileName == 'Cunard Sales Director/Manager' || profileName == 'Cunard Sales Leadership') &&  checkUserForDirector(userId)){
+            Approval.ProcessSubmitRequest req1 = new Approval.ProcessSubmitRequest();
+            req1.setComments('Submitting transfer fund record for approval.');
+            req1.setObjectId(fund.Id);
+            req1.setSubmitterId(bud.OwnerId); 
+            req1.setNextApproverIds(cunardApprovers);
+            req1.setProcessDefinitionNameOrId('Cunard_Director_Leadership_Funds_Tran');
+            Approval.ProcessResult result = Approval.process(req1);
+            System.debug('Cunard Fund transfer Submitted for Approval');
+        }
+        else if( (profileName == 'Holland Sales Director/Manager' || profileName == 'Holland Sales Leadership') &&  checkUserForDirector(userId)){
+            Approval.ProcessSubmitRequest req1 = new Approval.ProcessSubmitRequest();
+            req1.setComments('Submitting transfer fund record for approval.');
+            req1.setObjectId(fund.Id);
+            req1.setSubmitterId(bud.OwnerId); 
+            req1.setNextApproverIds(hollandApprovers);
+            req1.setProcessDefinitionNameOrId('Holland_Director_Leadership_Funds_Tran');
+            Approval.ProcessResult result = Approval.process(req1);
+            System.debug('Holland Fund transfer Submitted for Approval');
+        }
+
+
+        return budgetId;
+
+    }
+    
+}
