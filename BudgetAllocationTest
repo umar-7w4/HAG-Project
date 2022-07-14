@@ -1,0 +1,44 @@
+@isTest
+public class BudgetAllocationTest {
+    
+    @isTest
+    static void testMe(){
+        
+        Budget__c bud1 = new Budget__c();
+        bud1.Name = 'Budget 1';
+        bud1.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Parent Budget').getRecordTypeId();
+        bud1.Status__c = 'Approved';
+        bud1.Type__c = 'Co-Op Discretionary';
+        bud1.Amount__c = 100000;
+        bud1.OwnerId = [Select Id, Name from User where Name = 'Mohammad Umar'].Id;
+        bud1.Start_Date__c = System.today();
+        
+        insert bud1;
+        
+        List<String> names1 = new List<String>();
+        List<String> ids1 = new List<String>();
+        names1.add('Mohammad Umar');
+        //names1.add('Alycia Oliphant');
+        //names1.add('Cunard Test User');
+        //names1.add('Amanda Jordan');
+        
+        ids1.add([Select Id, Name from User where Name = 'Mohammad Umar'].Id);
+        //ids1.add([Select Id, Name from User where Name = 'Cunard Test User'].Id);
+        //ids1.add([Select Id, Name from User where Name = 'Alycia Oliphant'].Id);
+        
+        //ids1.add([Select Id, Name from User where Name = 'Amanda Jordan'].Id);    
+        System.assertEquals(names1, BudgetAllocationApex.getRoleSubordinateUsers(bud1.Id) );
+        System.assertEquals(false, BudgetAllocationApex.checkExistingBudgetWithOwner(bud1.OwnerId, bud1.Type__c, bud1.Year__c, bud1.Id, bud1.RecordType__c));
+        System.assertEquals(100000, BudgetAllocationApex.getRemainingAmount(bud1.Id));
+        System.assertEquals('Approved', BudgetAllocationApex.getStatus(bud1.Id));
+        
+        System.assertEquals(ids1, BudgetAllocationApex.getUserIds(bud1.Id) );
+        
+        Map<Id, Double> map1 = new Map<Id, Double>();
+        map1.put([Select Id, Name from User where Name = 'Alycia Oliphant'].Id, 100 );
+        System.debug(BudgetAllocationApex.createChildBudgets(bud1.Id, map1));
+        System.debug(BudgetAllocationApex.createChildBudgets(bud1.Id, map1));
+        
+    }
+
+}
