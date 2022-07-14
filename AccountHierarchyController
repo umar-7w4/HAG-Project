@@ -1,0 +1,285 @@
+({
+    doInit: function(component, event, helper) {        
+
+        var count;
+        var brandsSelectedbyuser;
+        var selectedBrandValue;
+        const map1 = new Map();
+     	var action = component.get("c.getBrands");
+     	var accId = component.get("v.recordId");
+        var brandArray = [];
+        var valueArray = {};
+        var brandArr = [];
+     	action.setParams({recId : accId} );
+     	action.setCallback(this, function(response){
+           	var state = response.getState();
+            console.log("Hello");
+            console.log('List values',response.getReturnValue());
+            brandArray = response.getReturnValue();
+            
+            if(brandArray.length>=1){
+                component.find("statusPicklist").set("v.value", brandArray[0]);
+                brandArray.forEach(function(item, index) {
+                	var obj1={'key':item,'value':item}; 
+               		brandArr.push(obj1);
+                
+				});
+            }
+            //console.log('Brand Values',brandArr)
+            //console.log('brandArr lenght',brandArr.length);
+            var count  = brandArr.length;
+           
+           	if(state == 'SUCCESS') {
+            	component.set('v.options', brandArr);
+                component.set('v.brandCount', brandArr.length);
+                //helper.secondfun(component,event,helper);
+                var count  =  helper.secondfun(component,event,helper);
+				//console.log('Knock valueeeee',count);
+                
+                var brandSelectedAction = component.get("c.getBrandSelected");
+                brandSelectedAction.setCallback(this,function(response){
+                    var brandState = response.getState();
+                    if(brandState == 'SUCCESS') {
+                        component.set('v.userselectedbrands', response.getReturnValue());
+                        brandsSelectedbyuser = component.get("v.userselectedbrands");
+                        var countSelected = 0;
+                        if(brandsSelectedbyuser!=null){
+                            countSelected = brandsSelectedbyuser.split(";").length;
+                            console.log(countSelected);
+                        }
+                        if(countSelected==1){
+                            selectedBrandValue = brandsSelectedbyuser.split(";")[0];
+                            console.log(selectedBrandValue);
+                            if(selectedBrandValue=='PC'){
+                                component.set("v.ltngSelectedvalue",'Princess');
+                            }
+                            else if(selectedBrandValue=='CU'){
+                                component.set("v.ltngSelectedvalue",'Cunard');
+                            }
+                            else if(selectedBrandValue=='SB'){
+                                component.set("v.ltngSelectedvalue",'Seabourn');
+                            }
+                            else if(selectedBrandValue=='HA'){
+                                component.set("v.ltngSelectedvalue",'Holland');
+                            }
+                            console.log(component.get("v.ltngSelectedvalue"));
+                            //onSubmit(component, event, helper);
+                            //component.set('v.onebrandselected',true);
+                            var a = component.get('c.onSubmit');
+        				    $A.enqueueAction(a);
+                            
+                        }
+
+                    }
+                    
+                });
+                $A.enqueueAction(brandSelectedAction);
+                
+            }
+        });
+    	$A.enqueueAction(action);
+   },
+    
+    dosomething : function(component,event,helper){
+        //var selectedField = event.target.id;
+        //console.log(selectedField);
+        //console.log(cmp.find("cStat").get("v.value"));
+    },
+    
+    onSubmit: function (component, event, helper) { 
+        console.log('doInit of component called');
+        console.log(component.find("statusPicklist").get("v.value"));
+       
+        
+       // var count  =  helper.secondfun(component,event,helper);
+		//console.log('Knock',count);
+        
+        var selectedValue = component.get("v.ltngSelectedvalue");
+        var fieldValueName;
+        var fieldValue;
+        if(selectedValue=='Princess'){
+            fieldValue = 'Region_District_Code_PC__c';
+        }
+        else if(selectedValue=='Cunard'){;
+            fieldValue = 'Region_District_Code_CU__c';
+        }
+        else if(selectedValue=='Seabourn'){     
+            fieldValue = 'Region_District_Code_SB__c';
+        }
+        else if(selectedValue=='Holland'){
+            fieldValue = 'Region_District_Code_HA__c';
+        }
+        if(selectedValue!=null){
+            component.set('v.multipleBrands',false);
+        }
+        console.log(fieldValue);
+        console.log(selectedValue);
+        
+        var action = component.get("c.getName");
+        var accId = component.get("v.recordId");
+        action.setParams({recId : accId} );
+        action.setCallback(this, function(response){
+            var state = response.getState();
+            if(state == 'SUCCESS') {
+                component.set('v.accountName', response.getReturnValue());
+            }
+        });
+        $A.enqueueAction(action);
+        
+        
+        var columns = [
+            {
+                type: 'url',
+                fieldName: 'AccountURL',
+                label: 'Account Name',
+                typeAttributes: {
+                    label: { fieldName: 'accountName' }
+                }
+            },
+            {
+                type: 'Text',
+                fieldName : 'Agency_ID__c',
+                label : 'Agency ID'
+            },
+            {
+                type: 'Picklist',
+                fieldName : 'Type',
+                label : 'Type'
+            },
+            {
+                type: 'Picklist',
+                fieldName : 'Status__c',
+                label : 'Status'
+            },
+            {
+                type: 'mailingCity',
+                fieldName: 'ShippingCity',
+                label: 'Mailing City'
+            },
+            {
+                type: 'mailingState',
+                fieldName: 'ShippingState',
+                label: 'Mailing State'
+            },
+            {
+                type: 'mailingStreet',
+                fieldName: 'ShippingStreet',
+                label: 'Mailing Street'
+            },
+            {
+                type: 'mailingPostalCode',
+                fieldName: 'ShippingPostalCode',
+                label: 'Mailing Postal Code'
+            },
+            {
+                type: 'region/District Code',
+                fieldName:  fieldValue,
+                label: 'Region/District Code'
+            }
+             
+        ];
+        component.set('v.gridColumns', columns);
+        
+        
+        var trecid = component.get("v.recordId");
+        console.log(trecid);
+        //var tsObjectName= component.get('v.ltngSobjectname');
+        //var tparentFieldAPIname= component.get('v.ltngParentFieldAPIName');
+        //var tlabelFieldAPIName= component.get('v.ltngLabelFieldAPIName');
+        if(trecid){
+             //console.log('doInit of component called');
+            helper.callToServer(
+                component,
+                "c.findHierarchyData",
+                function(response) {
+                    var expandedRows = [];
+                    var apexResponse = response;
+                    var roles = {};
+                    console.log('*******apexResponse:'+JSON.stringify(apexResponse));
+                    var results = apexResponse;
+                    roles[undefined] = { Name: "Root", _children: [] };
+                    apexResponse.forEach(function(v) {
+                        expandedRows.push(v.Account__c);
+                        console.log(v.Account__r.Status__c);
+                        if(selectedValue=='Princess'){
+                            roles[v.Account__c] = { 
+                                accountName: v.Account__r.Name ,
+                                name: v.Account__c, 
+                                Agency_ID__c : v.Account__r.Agency_ID__c,
+                                Type: v.Account__r.Type,
+                                ShippingCity : v.Account__r.ShippingCity ,
+                                ShippingState : v.Account__r.ShippingState ,
+                                ShippingStreet : v.Account__r.ShippingStreet ,
+                                ShippingPostalCode : v.Account__r.ShippingPostalCode ,
+                                Region_District_Code_PC__c : v.Account__r.Region_District_Code_PC__c, 
+                                Status__c  : v.Account__r.Status__c,
+                                AccountURL:'/'+v.Account__c,
+                            _children: [] };
+                        }
+                        else if(selectedValue=='Cunard'){
+                            roles[v.Account__c] = { 
+                                accountName: v.Account__r.Name ,
+                                name: v.Account__c, 
+                                Agency_ID__c : v.Account__r.Agency_ID__c,
+                                Type: v.Account__r.Type,
+                                ShippingCity : v.Account__r.ShippingCity ,
+                                ShippingState : v.Account__r.ShippingState ,
+                                ShippingStreet : v.Account__r.ShippingStreet ,
+                                ShippingPostalCode : v.Account__r.ShippingPostalCode ,
+                                Region_District_Code_CU__c : v.Account__r.Region_District_Code_CU__c, 
+                                Status__c  : v.Account__r.Status__c,
+                                AccountURL:'/'+v.Account__c,
+                            _children: [] };
+                        }
+                        else if(selectedValue=='Seabourn'){
+                            roles[v.Account__c] = { 
+                                accountName: v.Account__r.Name ,
+                                name: v.Account__c, 
+                                Agency_ID__c : v.Account__r.Agency_ID__c,
+                                Type: v.Account__r.Type,
+                                ShippingCity : v.Account__r.ShippingCity ,
+                                ShippingState : v.Account__r.ShippingState ,
+                                ShippingStreet : v.Account__r.ShippingStreet ,
+                                ShippingPostalCode : v.Account__r.ShippingPostalCode ,
+                                Region_District_Code_SB__c : v.Account__r.Region_District_Code_SB__c, 
+                                Status__c  : v.Account__r.Status__c,
+                                AccountURL:'/'+v.Account__c,
+                            _children: [] };
+                        }
+                        else if(selectedValue=='Holland'){
+                            roles[v.Account__c] = { 
+                                accountName: v.Account__r.Name ,
+                                name: v.Account__c, 
+                                Agency_ID__c : v.Account__r.Agency_ID__c,
+                                Type: v.Account__r.Type,
+                                ShippingCity : v.Account__r.ShippingCity ,
+                                ShippingState : v.Account__r.ShippingState ,
+                                ShippingStreet : v.Account__r.ShippingStreet ,
+                                ShippingPostalCode : v.Account__r.ShippingPostalCode ,
+                                Region_District_Code_HA__c : v.Account__r.Region_District_Code_HA__c,
+                                Status__c  : v.Account__r.Status__c,
+                                AccountURL:'/'+v.Account__c,
+                            _children: [] };
+                        }
+
+                    });
+                    apexResponse.forEach(function(v) {
+                        roles[v.ParentAccount__c]._children.push(roles[v.Account__c]);   
+                    });                
+                    component.set("v.gridData", roles[undefined]._children);
+                    console.log('*******treegrid data:'+JSON.stringify(roles[undefined]._children));
+                    
+                    component.set('v.gridExpandedRows', expandedRows);
+                }, 
+                {
+                    recId: trecid,
+                    brandValue : selectedValue
+                }
+            );    
+        } 
+        
+    }
+    
+
+
+})
