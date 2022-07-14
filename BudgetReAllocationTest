@@ -1,0 +1,45 @@
+@isTest
+public class BudgetReAllocationTest {
+    
+    @isTest
+    static void testMe(){
+        
+        Budget__c bud1 = new Budget__c();
+        bud1.Name = 'Budget 1';
+        bud1.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Other Budget').getRecordTypeId();
+        bud1.Status__c = 'Approved';
+        bud1.Type__c = 'Co-Op Discretionary';
+        bud1.Amount__c = 100000;
+        bud1.OwnerId = [Select Id, Name from User where Name = 'Michelle Sutter'].Id;   
+        bud1.Start_Date__c = System.today();
+        
+        insert bud1;
+        
+        Budget__c bud2 = new Budget__c();
+        bud2.Name = 'Budget 2';
+        bud2.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Other Budget').getRecordTypeId();
+        bud2.Status__c = 'Approved';
+        bud2.Type__c = 'Co-Op Discretionary';
+        bud2.Amount__c = 100;
+        bud2.OwnerId = [Select Id, Name from User where Name = 'Clayton Goss'].Id;
+        bud2.Start_Date__c = System.today();
+        
+        insert bud2;
+        
+        System.assertEquals( [Select Id, Name from User where Name = 'Clayton Goss'].Id , '0055f000007uoqAAAQ');
+        System.assertEquals(100000, BudgetReAllocationApex.getRemainingAmount(bud1.Id));
+        System.debug(BudgetReAllocationApex.checkForManagerRecord(bud1.Id));
+        System.assertEquals(true, BudgetReAllocationApex.checkForManagerRecord(bud1.Id));
+        Test.startTest();
+        System.debug(BudgetReAllocationApex.transferFunds(bud1.Id, 100, 'Thanks'));
+        Test.stopTest();
+        System.assertEquals(bud1.Id, BudgetReAllocationApex.transferFunds(bud1.Id, 100,'Thanks'));
+              
+        System.assertEquals(null, bud1.Total_Funds_Transferred_Out__c);
+        System.assertEquals(null, bud2.Total_Funds_Transferred_In__c);
+        
+        
+
+    }
+
+}
