@@ -1,0 +1,28 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,force:lightningQuickAction,force:hasRecordId" controller="BudgetsFundsTransferCoOpToParent" >
+         <aura:attribute name="remainingAmount" type="Decimal"/>
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+         <h1 style="text-align:center;font-size:20px;">Enter Budget Amount to transfer funds to Parent Budget</h1>
+         <br/>
+         <div>
+            <lightning:input type="Number" step=".01" aura:id="colors"/>
+         </div>
+         <br/>
+         <br/>
+         <div>
+             <h1 style="text-align:center;font-size:20px;">Enter the comments</h1>
+             <lightning:input type="Text" aura:id="comment"/> 
+         </div>
+         <br/>
+         <br/>
+         <button class="slds-button slds-button_brand slds-align_absolute-center" aura:id="submitbutton"  onclick="{!c.submitForm}">Save</button>
+         
+    	 <aura:html tag="style">
+   
+            .slds-modal__content{
+             	overflow-y: auto;
+                height : 400px !important;
+                max-height:unset !important;
+            }
+         </aura:html>
+	
+</aura:component>
