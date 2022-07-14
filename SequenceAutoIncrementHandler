@@ -1,0 +1,174 @@
+public without sharing class SequenceAutoIncrementHandler {
+    
+    public static void setCreatedDate(List<Invoice__c> invoices){
+        List<Invoice__c> invs = new List<Invoice__c>();
+        for(Invoice__c i : invoices ){
+            i.Created_Date__c = DateTime.now();
+            invs.add(i);
+        }
+        //update invs;
+    }
+    
+    
+    public static Integer count2(){
+        Integer c = 0;
+        List<Invoice__c> invs = [Select Id, RecordTypeId from Invoice__c where RecordTypeId =: Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId() AND Created_Date__c >= : Datetime.newInstance(System.today().year() , 12, 1)];
+        return invs.size();
+    }
+    
+    public static Integer countForHASB2(String expId, String budId){
+        Integer c = 0;
+        List<Invoice__c> invs = [Select Id, Name, RecordTypeId , Budget__c , Analysis_Code__c from Invoice__c where RecordTypeId =: Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('HA & SB Invoice').getRecordTypeId() AND Created_Date__c >= : Datetime.newInstance(System.today().year() , 12, 1)];
+        Budget__c temp1 = [Select Id, Budget_Type__c from Budget__c where Id = : budId];
+        
+        Expense__c exp = [Select Id, Analysis_Code_HA__c , Analysis_Code_SB__c  from Expense__c where Id = : expId]; 
+        String analysisCode = '';
+        if(exp.Analysis_Code_HA__c==null){
+            analysisCode = exp.Analysis_Code_SB__c;
+        }
+        else{
+            analysisCode = exp.Analysis_Code_HA__c;
+        }
+        //System.debug('Analysis code'+analysisCode);
+        
+        for(Invoice__c i : invs){
+            Budget__c temp = [Select Id, Budget_Type__c from Budget__c where Id = : i.Budget__c];  
+            if(i.Analysis_Code__c == analysisCode && temp.Budget_Type__c == temp1.Budget_Type__c){
+                c+=1;
+            }
+        }
+        return c;
+    }
+    
+    
+    public static Integer count(){
+        Integer c = 0;
+        List<Invoice__c> invs = [Select Id, RecordTypeId from Invoice__c where RecordTypeId =: Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId() ];
+        return invs.size();
+    }
+    
+    public static Integer countForHASB(String expId, String budId){
+        Integer c = 0;
+        List<Invoice__c> invs = [Select Id, Name, RecordTypeId , Budget__c , Analysis_Code__c from Invoice__c where RecordTypeId =: Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('HA & SB Invoice').getRecordTypeId()];
+        Budget__c temp1 = [Select Id, Budget_Type__c from Budget__c where Id = : budId];
+        
+        Expense__c exp = [Select Id, Analysis_Code_HA__c , Analysis_Code_SB__c  from Expense__c where Id = : expId]; 
+        String analysisCode = '';
+        if(exp.Analysis_Code_HA__c==null){
+            analysisCode = exp.Analysis_Code_SB__c;
+        }
+        else{
+            analysisCode = exp.Analysis_Code_HA__c;
+        }
+        //System.debug('Analysis code'+analysisCode);
+        
+        for(Invoice__c i : invs){
+            //System.debug(i);
+            Budget__c temp = [Select Id, Budget_Type__c from Budget__c where Id = : i.Budget__c];
+            //System.debug('temp'+temp);
+            //System.debug('temp1'+temp1);
+            //System.debug(i.Analysis_Code__c+' '+analysisCode);
+            //System.debug(temp.Budget_Type__c+' '+temp1.Budget_Type__c);
+            if(i.Analysis_Code__c == analysisCode && temp.Budget_Type__c == temp1.Budget_Type__c){
+                c+=1;
+            }
+        }
+        return c;
+    }
+    
+    static boolean resetPCCU = true;    
+    static boolean resetSBHA = true;  
+    static boolean resetPCCU1 = true;    
+    static boolean resetSBHA1 = true;  
+    static boolean resetPCCU2 = true;    
+    static boolean resetSBHA2 = true;  
+    static boolean resetPCCU3 = true;    
+    static boolean resetSBHA3 = true;  
+    static boolean resetPCCU4 = true;    
+    static boolean resetSBHA4 = true;  
+    static boolean resetPCCU5 = true;    
+    static boolean resetSBHA5 = true;  
+    
+    public static void sequnceAutoIncrement(List<Invoice__c> invoices){
+        
+        List<Invoice__c> upInvs = new List<Invoice__c>();
+        Integer mon = invoices[0].Created_Date__c.month();
+        Integer day = invoices[0].Created_Date__c.day();
+        //System.debug(mon);
+		//System.debug(day);
+        for(Invoice__c i : invoices){
+            //System.debug('======1');
+            if(i.RecordTypeId == Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId()){
+                if(mon==12 && day ==1){
+                    if(count2()==0){
+                        i.Sequence__c = '001';
+                    }
+                    else{
+                        if(String.valueOf(count2()+1).length()>=3){
+                            i.Sequence__c = String.valueOf(count2()+1);
+                        }
+                        else if(String.valueOf(count2()+1).length()==2){
+                            //System.debug('======1');
+                            i.Sequence__c = '0'+String.valueOf(count2()+1);
+                        }
+                        else if(String.valueOf(count2()+1).length()==1){
+                           // System.debug('======2');
+                            i.Sequence__c = '00'+String.valueOf(count2()+1); 
+                        } 
+                    }
+                }
+                else if(String.valueOf(count()+1).length()>=3){
+                    i.Sequence__c = String.valueOf(count()+1);
+                }
+                else if(String.valueOf(count()+1).length()==2){
+                    //System.debug('======1');
+                    i.Sequence__c = '0'+String.valueOf(count()+1);
+                }
+                else if(String.valueOf(count()+1).length()==1){
+                   // System.debug('======2');
+                    i.Sequence__c = '00'+String.valueOf(count()+1);
+                }  
+            }
+            else if(i.RecordTypeId == Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('HA & SB Invoice').getRecordTypeId()){
+                Integer x = countForHASB(i.Expense__c, i.Budget__c);
+                //System.debug(x);
+                Integer y = countForHASB2(i.Expense__c, i.Budget__c);
+                if(mon==12 && day ==1){
+                    if(countForHASB2(i.Expense__c, i.Budget__c)==0){
+                        i.Sequence__c = '001';
+                    }
+                    else{
+                        if(String.valueOf(y+1).length()>=3){
+                            i.Sequence__c = String.valueOf(y+1);
+                        }
+                        else if(String.valueOf(y+1).length()==2){
+                            //System.debug('======1');
+                            i.Sequence__c = '0'+String.valueOf(y+1);
+                        }
+                        else if(String.valueOf(y+1).length()==1){
+                            //System.debug('======2');
+                            i.Sequence__c = '00'+String.valueOf(y+1);
+                        }  
+                    }
+
+                }
+                else if(String.valueOf(x+1).length()>=3){
+                    i.Sequence__c = String.valueOf(x+1);
+                }
+                else if(String.valueOf(x+1).length()==2){
+                    //System.debug('======1');
+                    i.Sequence__c = '0'+String.valueOf(x+1);
+                }
+                else if(String.valueOf(x+1).length()==1){
+                    //System.debug('======2');
+                    i.Sequence__c = '00'+String.valueOf(x+1);
+                }                      
+                    
+            }
+                //upInvs.add(i);
+        }
+
+        //update upInvs;
+    }
+
+}
