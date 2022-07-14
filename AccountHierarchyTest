@@ -1,0 +1,58 @@
+@isTest
+public class SK_AccountTreeGridCmpControllerTest {
+    
+    @isTest
+    static void testMe(){ 
+        
+        Account childAccount1 = new Account();
+        childAccount1.Name = 'Account 1';
+        //childAccount1.CurrencyIsoCode  = 'USD - U.S. Dollar';
+        
+        insert childAccount1;
+        
+        Account parentAccount1 = new Account();
+        parentAccount1.Name = 'P Account 1';
+        //parentAccount1.CurrencyIsoCode  = 'USD - U.S. Dollar';
+        
+        insert parentAccount1;
+
+        AccountAccountRelationship__c ar1 = new AccountAccountRelationship__c();
+        ar1.Account__c = childAccount1.Id;
+        ar1.ParentAccount__c = parentAccount1.Id;
+        ar1.RecordTypeId = Schema.SObjectType.AccountAccountRelationship__c.getRecordTypeInfosByName().get('Cunard').getRecordTypeId();
+        
+        insert ar1;
+        
+        AccountAccountRelationship__c ar2 = new AccountAccountRelationship__c();
+        ar2.Account__c = parentAccount1.Id;
+        ar2.RecordTypeId = Schema.SObjectType.AccountAccountRelationship__c.getRecordTypeInfosByName().get('Cunard').getRecordTypeId();
+        
+        insert ar2;
+        
+        List<AccountAccountRelationship__c> check1 = SK_AccountTreeGridCmpController.findHierarchyData(childAccount1.Id, 'Cunard');
+        String brandCheck = [Select Name, Brand__c from User where Id =: userinfo.getUserid()].Brand__c;
+        //List<String> brandList = SK_AccountTreeGridCmpController.getBrands();
+        //System.equals(countSemi(brandCheck)+1, brandList.size());
+        System.equals(check1.size(), 2);
+        String userId = [Select Id, Name from User where Name = 'Seabourn Test User'].Id;
+        List<String> brandCheckValues  = new List<String>();
+        brandCheckValues.add('Princess');
+        brandCheckValues.add('Cunard');
+        brandCheckValues.add('Seabourn');
+        brandCheckValues.add('Holland');
+        System.assertEquals(brandCheckValues,  SK_AccountTreeGridCmpController.getBrands());
+        
+        
+    }
+    
+    static Integer countSemi(String str){
+        Integer value = 0;
+        for(Integer i = 0;i<str.length()-1;i++){
+            if(str.substring(i,i+1) ==';'){
+                value+=1;
+            }
+        }
+        return value;
+    }
+
+}
