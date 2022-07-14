@@ -1,0 +1,450 @@
+@isTest
+public class SequenceAutoIncrementTest {
+    
+    @isTest
+    static void testMe(){
+        
+        Budget__c bud1 = new Budget__c();
+        bud1.Name = 'Budget 1';
+        bud1.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Other Budget').getRecordTypeId();
+        bud1.Status__c = 'Approved';
+        bud1.Type__c = 'Co-Op Discretionary';
+        bud1.Amount__c = 100000;
+        bud1.OwnerId = [Select Id, Name from User where Name = 'Seabourn Test User'].Id;
+        bud1.Start_Date__c = System.today();
+        
+        insert bud1;
+        
+        Account acc1 = new Account();
+        acc1.Name = 'Account 1';
+        
+        insert acc1;
+        
+        Expense__c  com1 = new Expense__c ();
+        com1.Name = 'Commitment 1';
+        com1.Account__c = acc1.Id;
+        com1.Status__c = 'Planned';
+        com1.Start_Date__c = System.today();
+        com1.Amount__c = 1000;
+        com1.Budget__c = bud1.Id;
+        
+        insert com1;
+        
+        Invoice__c inv1 = new Invoice__c();
+        inv1.Invoice_Number__c = 'TEST1';
+        inv1.Invoice_Amount__c = 10;
+        inv1.Expense__c = com1.Id;
+        inv1.Invoice_Date__c = System.today()+10;
+        inv1.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv1.Created_Date__c = DateTime.now();
+        
+        insert inv1;
+        
+        Invoice__c inv2 = new Invoice__c();
+        inv2.Invoice_Number__c = 'TEST1';
+        inv2.Invoice_Amount__c = 10;
+        inv2.Expense__c = com1.Id;
+        inv2.Invoice_Date__c = System.today()+10;
+        inv2.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('HA & SB Invoice').getRecordTypeId();
+        inv2.Analysis_Code__c = '3724';
+        inv2.Budget__c = bud1.Id;
+        inv2.Created_Date__c = DateTime.now();
+        
+        insert inv2;
+        
+        Invoice__c inv3 = new Invoice__c();
+        inv3.Invoice_Number__c = 'TEST1';
+        inv3.Invoice_Amount__c = 10;
+        inv3.Expense__c = com1.Id;
+        inv3.Invoice_Date__c = System.today()+10;
+        inv3.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('HA & SB Invoice').getRecordTypeId();
+        inv3.Analysis_Code__c = '4004';
+        inv3.Budget__c = bud1.Id;
+        insert inv3;
+        
+        Test.setCreatedDate(inv3.Id, Datetime.newInstance(System.today().year() , 12, 1));
+        
+        List<Invoice__c> invoices = new List<Invoice__c>();
+        invoices.add(inv1);
+        
+        System.assertEquals(1, SequenceAutoIncrementHandler.count());
+        SequenceAutoIncrementHandler.sequnceAutoIncrement(invoices);
+        System.assertEquals( '002', inv1.Sequence__c );        
+        
+        System.assertEquals(0, SequenceAutoIncrementHandler.countForHASB(com1.Id, bud1.Id));
+        System.assertEquals(0, SequenceAutoIncrementHandler.count2());
+        System.assertEquals(0, SequenceAutoIncrementHandler.countForHASB2(com1.Id, bud1.Id));
+        
+        //final Lead[] testAccounts = (Lead[]) Test.loadData(Lead.sObjectType, staticResourceName);s
+
+        Invoice__c inv4 = new Invoice__c();
+        inv4.Invoice_Number__c = 'TEST1';
+        inv4.Invoice_Amount__c = 10;
+        inv4.Expense__c = com1.Id;
+        inv4.Invoice_Date__c = System.today()+10;
+        inv4.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('HA & SB Invoice').getRecordTypeId();
+        inv4.Analysis_Code__c = '4004';
+        inv4.Budget__c = bud1.Id;
+        inv4.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        insert inv4;
+        
+        inv4.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        
+        List<Invoice__c> ins = new List<invoice__c>();
+        ins.add(inv4);
+        
+        SequenceAutoIncrementHandler.sequnceAutoIncrement(ins);
+        //System.debug(SequenceAutoIncrementHandler.sequnceAutoIncrement(ins));
+
+        Invoice__c inv5 = new Invoice__c();
+        inv5.Invoice_Number__c = 'TEST1';
+        inv5.Invoice_Amount__c = 10;
+        inv5.Expense__c = com1.Id;
+        inv5.Invoice_Date__c = System.today()+10;
+        inv5.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv5.Analysis_Code__c = '4004';
+        inv5.Budget__c = bud1.Id;
+        inv5.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        insert inv5;
+        
+        inv5.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        
+        List<Invoice__c> ins1 = new List<invoice__c>();
+        ins1.add(inv5);
+        
+        SequenceAutoIncrementHandler.sequnceAutoIncrement(ins1);
+        System.assertEquals(0, SequenceAutoIncrementHandler.countForHASB2(com1.Id, bud1.Id));
+          
+    }
+    
+    static void testMe1(){
+        
+        
+        Budget__c bud1 = new Budget__c();
+        bud1.Name = 'Budget 1';
+        bud1.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Other Budget').getRecordTypeId();
+        bud1.Status__c = 'Approved';
+        bud1.Type__c = 'Co-Op Discretionary';
+        bud1.Amount__c = 100000;
+        bud1.OwnerId = [Select Id, Name from User where Name = 'Seabourn Test User'].Id;
+        bud1.Start_Date__c = System.today();
+        
+        insert bud1;
+        
+        Account acc1 = new Account();
+        acc1.Name = 'Account 1';
+        
+        insert acc1;
+        
+        Expense__c  com1 = new Expense__c ();
+        com1.Name = 'Commitment 1';
+        com1.Account__c = acc1.Id;
+        com1.Status__c = 'Planned';
+        com1.Start_Date__c = System.today();
+        com1.Amount__c = 1000;
+        com1.Budget__c = bud1.Id;
+        
+        insert com1;
+        
+        
+        
+                Invoice__c inv11 = new Invoice__c();
+        inv11.Invoice_Number__c = 'TEST1';
+        inv11.Invoice_Amount__c = 10;
+        inv11.Expense__c = com1.Id;
+        inv11.Invoice_Date__c = System.today()+10;
+        inv11.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv11.Created_Date__c = DateTime.now();
+        
+        insert inv11;
+        
+        Invoice__c inv12 = new Invoice__c();
+        inv12.Invoice_Number__c = 'TEST1';
+        inv12.Invoice_Amount__c = 10;
+        inv12.Expense__c = com1.Id;
+        inv12.Invoice_Date__c = System.today()+10;
+        inv12.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv12.Created_Date__c = DateTime.now();
+        
+        insert inv12;
+        
+                Invoice__c inv13 = new Invoice__c();
+        inv13.Invoice_Number__c = 'TEST1';
+        inv13.Invoice_Amount__c = 10;
+        inv13.Expense__c = com1.Id;
+        inv13.Invoice_Date__c = System.today()+10;
+        inv13.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv13.Created_Date__c = DateTime.now();
+        
+        insert inv13;
+        
+                Invoice__c inv14 = new Invoice__c();
+        inv14.Invoice_Number__c = 'TEST1';
+        inv14.Invoice_Amount__c = 10;
+        inv14.Expense__c = com1.Id;
+        inv14.Invoice_Date__c = System.today()+10;
+        inv14.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv14.Created_Date__c = DateTime.now();
+        
+        insert inv14;
+        
+                Invoice__c inv15 = new Invoice__c();
+        inv15.Invoice_Number__c = 'TEST1';
+        inv15.Invoice_Amount__c = 10;
+        inv15.Expense__c = com1.Id;
+        inv15.Invoice_Date__c = System.today()+10;
+        inv15.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv15.Created_Date__c = DateTime.now();
+        
+        insert inv15;
+        
+                Invoice__c inv16 = new Invoice__c();
+        inv16.Invoice_Number__c = 'TEST1';
+        inv16.Invoice_Amount__c = 10;
+        inv16.Expense__c = com1.Id;
+        inv16.Invoice_Date__c = System.today()+10;
+        inv16.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv16.Created_Date__c = DateTime.now();
+        
+        insert inv16;
+        
+                Invoice__c inv17 = new Invoice__c();
+        inv17.Invoice_Number__c = 'TEST1';
+        inv17.Invoice_Amount__c = 10;
+        inv17.Expense__c = com1.Id;
+        inv17.Invoice_Date__c = System.today()+10;
+        inv17.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv17.Created_Date__c = DateTime.now();
+        
+        insert inv17;
+        
+                Invoice__c inv18 = new Invoice__c();
+        inv18.Invoice_Number__c = 'TEST1';
+        inv18.Invoice_Amount__c = 10;
+        inv18.Expense__c = com1.Id;
+        inv18.Invoice_Date__c = System.today()+10;
+        inv18.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv18.Created_Date__c = DateTime.now();
+        
+        insert inv18;
+        
+                Invoice__c inv19 = new Invoice__c();
+        inv19.Invoice_Number__c = 'TEST1';
+        inv19.Invoice_Amount__c = 10;
+        inv19.Expense__c = com1.Id;
+        inv19.Invoice_Date__c = System.today()+10;
+        inv19.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv19.Created_Date__c = DateTime.now();
+        
+        insert inv19;
+        
+                Invoice__c inv20 = new Invoice__c();
+        inv20.Invoice_Number__c = 'TEST1';
+        inv20.Invoice_Amount__c = 10;
+        inv20.Expense__c = com1.Id;
+        inv20.Invoice_Date__c = System.today()+10;
+        inv20.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv20.Created_Date__c = DateTime.now();
+        
+        insert inv20;
+        
+                        Invoice__c inv21 = new Invoice__c();
+        inv21.Invoice_Number__c = 'TEST1';
+        inv21.Invoice_Amount__c = 10;
+        inv21.Expense__c = com1.Id;
+        inv21.Invoice_Date__c = System.today()+10;
+        inv21.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv21.Created_Date__c = DateTime.now();
+        
+        insert inv21;
+        
+        List<Invoice__c> invs3 = new List<Invoice__c>();
+        invs3.add(inv11);
+        invs3.add(inv12);
+        invs3.add(inv13);
+        invs3.add(inv14);
+        invs3.add(inv15);
+        invs3.add(inv16);
+        invs3.add(inv17);
+        invs3.add(inv18);
+        invs3.add(inv19);
+        invs3.add(inv20);
+        invs3.add(inv21);
+        
+        SequenceAutoIncrementHandler.sequnceAutoIncrement(invs3);
+        System.assertEquals(11, SequenceAutoIncrementHandler.count());
+        
+    }
+    
+   static void testMe2(){
+        
+        
+        Budget__c bud1 = new Budget__c();
+        bud1.Name = 'Budget 1';
+        bud1.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Other Budget').getRecordTypeId();
+        bud1.Status__c = 'Approved';
+        bud1.Type__c = 'Co-Op Discretionary';
+        bud1.Amount__c = 100000;
+        bud1.OwnerId = [Select Id, Name from User where Name = 'Seabourn Test User'].Id;
+        bud1.Start_Date__c = System.today();
+        
+        insert bud1;
+        
+        Account acc1 = new Account();
+        acc1.Name = 'Account 1';
+        
+        insert acc1;
+        
+        Expense__c  com1 = new Expense__c ();
+        com1.Name = 'Commitment 1';
+        com1.Account__c = acc1.Id;
+        com1.Status__c = 'Planned';
+        com1.Start_Date__c = System.today();
+        com1.Amount__c = 1000;
+        com1.Budget__c = bud1.Id;
+        
+        insert com1;
+        
+        
+        
+                Invoice__c inv11 = new Invoice__c();
+        inv11.Invoice_Number__c = 'TEST1';
+        inv11.Invoice_Amount__c = 10;
+        inv11.Expense__c = com1.Id;
+        inv11.Invoice_Date__c = System.today()+10;
+        inv11.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv11.Created_Date__c = DateTime.now();
+        
+        insert inv11;
+        
+        Invoice__c inv12 = new Invoice__c();
+        inv12.Invoice_Number__c = 'TEST1';
+        inv12.Invoice_Amount__c = 10;
+        inv12.Expense__c = com1.Id;
+        inv12.Invoice_Date__c = System.today()+10;
+        inv12.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv12.Created_Date__c = DateTime.now();
+        
+        insert inv12;
+        
+                Invoice__c inv13 = new Invoice__c();
+        inv13.Invoice_Number__c = 'TEST1';
+        inv13.Invoice_Amount__c = 10;
+        inv13.Expense__c = com1.Id;
+        inv13.Invoice_Date__c = System.today()+10;
+        inv13.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv13.Created_Date__c = DateTime.now();
+        
+        insert inv13;
+        
+                Invoice__c inv14 = new Invoice__c();
+        inv14.Invoice_Number__c = 'TEST1';
+        inv14.Invoice_Amount__c = 10;
+        inv14.Expense__c = com1.Id;
+        inv14.Invoice_Date__c = System.today()+10;
+        inv14.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv14.Created_Date__c = DateTime.now();
+        
+        insert inv14;
+        
+                Invoice__c inv15 = new Invoice__c();
+        inv15.Invoice_Number__c = 'TEST1';
+        inv15.Invoice_Amount__c = 10;
+        inv15.Expense__c = com1.Id;
+        inv15.Invoice_Date__c = System.today()+10;
+        inv15.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv15.Created_Date__c = DateTime.now();
+        
+        insert inv15;
+        
+                Invoice__c inv16 = new Invoice__c();
+        inv16.Invoice_Number__c = 'TEST1';
+        inv16.Invoice_Amount__c = 10;
+        inv16.Expense__c = com1.Id;
+        inv16.Invoice_Date__c = System.today()+10;
+        inv16.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv16.Created_Date__c = DateTime.now();
+        
+        insert inv16;
+        
+                Invoice__c inv17 = new Invoice__c();
+        inv17.Invoice_Number__c = 'TEST1';
+        inv17.Invoice_Amount__c = 10;
+        inv17.Expense__c = com1.Id;
+        inv17.Invoice_Date__c = System.today()+10;
+        inv17.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv17.Created_Date__c = DateTime.now();
+        
+        insert inv17;
+        
+                Invoice__c inv18 = new Invoice__c();
+        inv18.Invoice_Number__c = 'TEST1';
+        inv18.Invoice_Amount__c = 10;
+        inv18.Expense__c = com1.Id;
+        inv18.Invoice_Date__c = System.today()+10;
+        inv18.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv18.Created_Date__c = DateTime.now();
+        
+        insert inv18;
+        
+                Invoice__c inv19 = new Invoice__c();
+        inv19.Invoice_Number__c = 'TEST1';
+        inv19.Invoice_Amount__c = 10;
+        inv19.Expense__c = com1.Id;
+        inv19.Invoice_Date__c = System.today()+10;
+        inv19.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv19.Created_Date__c = DateTime.now();
+        
+        insert inv19;
+        
+                Invoice__c inv20 = new Invoice__c();
+        inv20.Invoice_Number__c = 'TEST1';
+        inv20.Invoice_Amount__c = 10;
+        inv20.Expense__c = com1.Id;
+        inv20.Invoice_Date__c = System.today()+10;
+        inv20.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv20.Created_Date__c = DateTime.now();
+        
+        insert inv20;
+        
+                        Invoice__c inv21 = new Invoice__c();
+        inv21.Invoice_Number__c = 'TEST1';
+        inv21.Invoice_Amount__c = 10;
+        inv21.Expense__c = com1.Id;
+        inv21.Invoice_Date__c = System.today()+10;
+        inv21.RecordTypeId = Schema.SObjectType.Invoice__c.getRecordTypeInfosByName().get('PC & CU Invoice').getRecordTypeId();
+        inv21.Created_Date__c = DateTime.now();
+        
+        insert inv21;
+        
+        List<Invoice__c> invs3 = new List<Invoice__c>();
+        inv11.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        inv12.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        inv13.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        inv14.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        inv15.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        inv16.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        inv17.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        inv18.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        inv19.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        inv20.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+        inv21.Created_Date__c = DateTime.newInstance(2022, 12, 1);
+       
+        invs3.add(inv11);
+        invs3.add(inv12);
+        invs3.add(inv13);
+        invs3.add(inv14);
+        invs3.add(inv15);
+        invs3.add(inv16);
+        invs3.add(inv17);
+        invs3.add(inv18);
+        invs3.add(inv19);
+        invs3.add(inv20);
+        invs3.add(inv21);
+        
+        SequenceAutoIncrementHandler.sequnceAutoIncrement(invs3);
+        System.assertEquals(11, SequenceAutoIncrementHandler.count());
+        
+    }
+
+}
