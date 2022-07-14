@@ -1,0 +1,88 @@
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" controller="SK_AccountTreeGridCmpController">
+    <aura:attribute name="accountName" type="Account"/>
+    <aura:attribute name="brandCount" type="Integer"/>
+    <aura:attribute name="multipleBrands" type="Boolean" default = "true"/>
+    <aura:attribute name="options" type="List" />
+	<aura:attribute name="ltngSelectedvalue" type="string"/>
+    <aura:attribute name="userselectedbrands" type="string"/>
+    
+    <aura:attribute name="ltngcurrentRecId" type="String"/>
+    <aura:attribute name="gridColumns" type="list" />
+    <aura:attribute name="gridData" type="Object" />
+    <aura:attribute name="gridExpandedRows" type="List" access="PRIVATE" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    
+    <aura:if isTrue="{!v.multipleBrands}">
+
+		<lightning:select class ="dropDown" name="cStat" label="Brands" value="{!v.ltngSelectedvalue}" aura:id="statusPicklist" onchange="{!c.dosomething }" >
+    		<aura:iteration items="{!v.options}" var="opt">
+  				<option value="{!opt.key}" text = "{!opt.value}"></option>
+    		</aura:iteration>
+		</lightning:select>
+    
+            <div class="buttonDiv">
+                <button class="slds-button slds-button_brand !important" onclick="{!c.onSubmit}">Next</button>
+            </div>
+            <aura:html tag="style">
+            .myBtn {
+              width : 77px;
+                }
+              .buttonDiv{
+                margin-top: 30px; !important;
+                margin-left: 240px; !important;
+            
+                }
+                
+            </aura:html>
+    	<aura:set attribute="else">
+                    <aura:html tag="style">
+                       .slds-modal__container{
+                            width: 100%;
+                            max-width: 120rem;
+                        }
+                        .modal-body{
+                        height : 1000px !important;
+                        max-height: 1000px !important;
+                        }
+                        
+                        .cuf-content {
+                            padding: 0 0rem !important;
+                        }
+                        .slds-p-around--medium {
+                            padding: 0rem !important;
+                        }       
+                        .slds-modal__content{
+                            overflow-y: auto;
+                           height : 1000px !important;
+                            max-height:unset !important;
+                        }
+                    </aura:html>
+                    
+                        <div role="banner" class="slds-page-header" data-aura-rendered-by="2886:0">
+                        <div class="slds-grid" data-aura-rendered-by="2887:0">
+                            <div class="slds-col slds-has-flexi-truncate" data-aura-rendered-by="2888:0">
+                                <nav role="navigation" class="slds-m-bottom--xx-small" aria-label="Breadcrumbs" data-aura-rendered-by="2889:0">
+                                    <ol class="slds-breadcrumb slds-list--horizontal" data-aura-rendered-by="2890:0">
+                                        <li class="slds-breadcrumb__item slds-text-title--caps" data-aura-rendered-by="2891:0">
+                                            <a id="breadCrumbEntity" class="slds-truncate" data-aura-rendered-by="2892:0" href="javascript:void(0);">Account</a></li>
+                                        <li class="slds-breadcrumb__item slds-text-title--caps" data-aura-rendered-by="2894:0"><!--render facet: 2897:0--><!--render facet: 2899:0--><!--render facet: 2901:0-->
+                                            <a data-refid="recordId" data-special-link="true" data-navigable="true" target="_blank" data-ownerid="2895:0" 
+                                            data-recordid="0015g00000FOV5bAAH" rel="noreferrer" href="/lightning/r/0015g00000FOV5bAAH/view" 
+                                            class=" outputLookupLink slds-truncate outputLookupLink-0015g00000FOV5bAAH-2895:0 forceOutputLookup" 
+                                            data-aura-rendered-by="2906:0" data-aura-class="forceOutputLookup" title="name"> {!v.accountName} <!--unrender facet: 2909:0--></a></li>
+                                    </ol></nav><h1 class="slds-page-header__title slds-truncate" data-aura-rendered-by="2914:0" title="Account Hierarchy">Account Hierarchy</h1>
+                                </div>
+                            </div>
+                        </div>
+                    <br></br>
+                    
+                    <lightning:treeGrid columns="{! v.gridColumns }"
+                        data="{! v.gridData }"
+                        keyField="name"
+                        expandedRows="{! v.gridExpandedRows}"
+                        aura:id="mytree"/>
+    	</aura:set>
+  	</aura:if> 
+    
+
+</aura:component>
