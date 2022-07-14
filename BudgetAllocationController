@@ -1,7 +1,29 @@
 ({
 	init : function(component, event, helper) {
-        
 
+        var action = component.get("c.getRoleSubordinateUsers");
+        //console.log(component.get("v.recordId"));
+        action.setParams({"budgetId": component.get("v.recordId")});
+        action.setCallback(this, function(response){
+            //console.log(response.getReturnValue());
+            var state = response.getState();
+            if(state == 'SUCCESS') {
+                component.set('v.roles', response.getReturnValue());
+            }
+        });
+        $A.enqueueAction(action);
+        
+        var action1 = component.get("c.getUserIds");
+        //console.log(component.get("v.recordId"));
+        action1.setParams({"budgetId": component.get("v.recordId")});
+        action1.setCallback(this, function(response){
+            console.log(response.getReturnValue());
+            var state = response.getState();
+            if(state == 'SUCCESS') {
+                component.set('v.userIdValues', response.getReturnValue());
+            }
+        });
+        $A.enqueueAction(action1);
         
         var action2 = component.get("c.getRemainingAmount");
         //console.log(component.get("v.recordId"));
@@ -14,91 +36,125 @@
             }
         });
         $A.enqueueAction(action2);
-
-	},
-    
-     
-    submitForm: function (cmp, event, helper) {
         
-        var amount = cmp.find("colors").get("v.value");
-		var comments = cmp.find("comment").get("v.value");
-        console.log(comments);
-        
-        console.log(amount);
-        console.log(cmp.get("v.recordId"));
-        var reAm = cmp.get('v.remainingAmount');
-        console.log(reAm);
-        console.log("====");
-        
-        
-        var action1 = cmp.get("c.checkForManagerRecord");
-        action1.setParams({"budgetId": cmp.get("v.recordId")});
-        action1.setCallback(this, function(response){
+        var action3 = component.get("c.getStatus");
+        //console.log(component.get("v.recordId"));
+        action3.setParams({"budgetId": component.get("v.recordId")});
+        action3.setCallback(this, function(response){
+            console.log(response.getReturnValue());
             var state = response.getState();
-            console.log('=====',response.getReturnValue());
-            if(state == 'SUCCESS' && response.getReturnValue()==true && comments !=null && comments !='') {
-                
-                var action = cmp.get("c.transferFunds");
-                action.setParams({"budgetId": cmp.get("v.recordId"), amount : amount, comments : comments });
-                action.setCallback(this, function(res) {
-                var response = res.getReturnValue();
-                console.log(response);
-                var state = action.getState();
-                if((cmp.isValid() && state == "SUCCESS") && amount<=reAm ){
-                               
-                   var toastEvent = $A.get("e.force:showToast");
-                   toastEvent.setParams({
-                        title : 'Success',
-                        message: 'Funds transfered successfully',
-                        type: 'success',
-                   });
-                   toastEvent.fire();
-                    
-                   var navEvt = $A.get("e.force:navigateToSObject");
-                   navEvt.setParams({
-                     "recordId": response,
-                     "slideDevName": "detail"
-                   });
-                   navEvt.fire();
-                 } 
-                 else if (amount>reAm) {
-                    var toastEvent = $A.get("e.force:showToast");
-                    toastEvent.setParams({
-                        title : 'Error',
-                        message:'Budget Transfer Amount exceeding Remaining Budget',
-                        type: 'error',
-                    });
-                    toastEvent.fire();
-                 }
-                 else if (state == "ERROR") {
-                 }
-              });
-              $A.enqueueAction(action);
-                
-            }
-            else if(comments==null || comments==''){
-                    var toastEvent = $A.get("e.force:showToast");
-                    toastEvent.setParams({
-                        title : 'Error',
-                        message:'Please enter the comments.',
-                        type: 'error',
-                    });
-                    toastEvent.fire();           
-            }
-            else if( response.getReturnValue()==false){
-                    var toastEvent = $A.get("e.force:showToast");
-                    toastEvent.setParams({
-                        title : 'Error',
-                        message:'No budget for the current type and year is available for the manager. Contact manager for additional information.',
-                        type: 'error',
-                    });
-                    toastEvent.fire();
+            if(state == 'SUCCESS') {
+                component.set('v.status', response.getReturnValue());
             }
         });
-        $A.enqueueAction(action1);
+        $A.enqueueAction(action3);
+       
         
+	},
+    
+    submitForm: function (cmp, event, helper) {
         
+        var userIds = cmp.get('v.userIdValues');
+        console.log(userIds);
+        
+        var stat = cmp.get('v.status');
+        console.log(stat);
+        
+        var roleMap = {}
+        var options;
+        var result = [];
+        var total = 0;
+        if(userIds.length==1){
+            options = cmp.find("colors").get("v.value");
+            console.log(options);
+            result.push(parseInt(options));
+            roleMap[userIds[0]] = parseFloat(parseInt(options));
+            total += parseFloat(parseInt(options));
+        }
+        else{
+            options = cmp.find("colors");
+            console.log(options);
+            for (var i=0; i<options.length; i++) {
+               if(!isNaN(parseInt(options[i].get('v.value')))){
+                   result.push(parseInt(options[i].get('v.value')));
+                   roleMap[userIds[i]] =  parseFloat(parseInt(options[i].get('v.value')));
+                   total += parseFloat(parseInt(options[i].get('v.value')));
+               }
+            }
+        }
 
+        console.log(result);
+        console.log(roleMap);
+        console.log(total);
+        
+        var reAm = cmp.get('v.remainingAmount');
+        console.log(reAm);
+        
+        var action = cmp.get("c.createChildBudgets");
+        action.setParams({"budgetId": cmp.get("v.recordId"), userIdsAmounts : roleMap });
+        action.setCallback(this, function(res) {
+        var response = res.getReturnValue();
+        console.log(response);
+        var state = action.getState();
+        if((cmp.isValid() && state == "SUCCESS") && total<=reAm && stat == 'Approved'){
+           
+            
+           var toastEvent = $A.get("e.force:showToast");
+           toastEvent.setParams({
+                title : 'Success',
+                message: 'Budgets Allocated successfully',
+                type: 'success',
+           });
+           toastEvent.fire();
+            
+           var navEvt = $A.get("e.force:navigateToSObject");
+           navEvt.setParams({
+             "recordId": response,
+             "slideDevName": "detail"
+           });
+           navEvt.fire();
+         } 
+         else if (total>reAm) {
+            var toastEvent = $A.get("e.force:showToast");
+            toastEvent.setParams({
+                title : 'Error',
+                message:'Total Budget Amount exceeding Remaining Budget',
+                type: 'error',
+            });
+            toastEvent.fire();
+         }
+         else if(stat!='Approved'){
+            var toastEvent = $A.get("e.force:showToast");
+            toastEvent.setParams({
+                title : 'Error',
+                message:'Budget Allocation can be initiated on approved parent budget only.',
+                type: 'error',
+            });
+            toastEvent.fire();     
+         }
+         else if (state == "ERROR") {
+            var toastEvent = $A.get("e.force:showToast");
+            toastEvent.setParams({
+                title : 'Error',
+                message:'Budget Allocation Failed!',
+                type: 'error',
+            });
+            toastEvent.fire();
+         }
+      });
+      $A.enqueueAction(action);
 
      }    
+
 })
+
+/*
+
+    var toastEvent = $A.get("e.force:showToast");
+    toastEvent.setParams({
+        "title": "Success!",
+        "message": "The record has been updated successfully."
+    });
+    toastEvent.fire();
+ 
+*/
