@@ -1,0 +1,50 @@
+public without sharing class BudgetReAllocationDirectorAmountUpdation {
+    
+    public static void updateAmounts(List<Funds_Transfer__c> funds, Map<Id,Funds_Transfer__c> oldFunds){
+        List<Funds_Transfer__c> upFunds = new List<Funds_Transfer__c>();
+        List<String> senBudIds = new List<String>();
+        List<String> recBudIds = new List<String>();
+        List<Double> amounts = new List<Double>();
+        for(Funds_Transfer__c i : funds){
+            if((i.Status__c == 'Approved' && oldFunds.get(i.Id).Status__c == 'Pending Approval')){
+                senBudIds.add(i.Sending_Budget__c);
+                recBudIds.add(i.Receiving_Budget__c);  
+                amounts.add(i.Amount__c);
+            }
+        }
+        
+        List<Budget__c> senBuds = [Select Id, Automation_Date_Time__c, Name, Amount__c, Total_Funds_Transferred_In__c, Total_Funds_Transferred_Out__c from Budget__c where Id =: senBudIds ];
+        List<Budget__c> recBuds = [Select Id, Automation_Date_Time__c, Name, Amount__c, Total_Funds_Transferred_In__c, Total_Funds_Transferred_Out__c from Budget__c where Id =: recBudIds ];
+        Double add1 = 0;
+        Double add2 = 0;
+        for(Integer i = 0; i<senBuds.size(); i++){
+            
+            recBuds[i].Amount__c += amounts[i] ;
+                  
+            if(recBuds[i].Total_Funds_Transferred_In__c==null){
+                add1 = 0 + amounts[i];
+            }
+            else{
+                add1 = recBuds[i].Total_Funds_Transferred_In__c + amounts[i];
+            }
+            recBuds[i].Total_Funds_Transferred_In__c  = add1;
+                
+            senBuds[i].Amount__c -= amounts[i];
+                
+            if(senBuds[i].Total_Funds_Transferred_Out__c==null){
+                add2 = 0 + amounts[i];
+            }
+            else{
+                add2 = senBuds[i].Total_Funds_Transferred_Out__c+ amounts[i];
+            }
+            senBuds[i].Total_Funds_Transferred_Out__c = add2;
+            
+            senBuds[i].Automation_Date_Time__c = datetime.now();
+            recBuds[i].Automation_Date_Time__c = datetime.now();
+        }
+        
+        update senBuds;
+        update recBuds;
+    }
+
+}
