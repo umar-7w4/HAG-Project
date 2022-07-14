@@ -1,0 +1,96 @@
+@isTest
+public class QuickConvertTest {
+    
+    @istest
+    static void testMe(){
+        
+        Lead lead1 = new Lead();
+        lead1.FirstName = 'Umar';
+        lead1.LastName = 'Mohammad';
+        lead1.Company = 'Umar Pvt Ltd';
+        lead1.Status = 'New';
+        lead1.RecordTypeId = Schema.SObjectType.Lead.getRecordTypeInfosByName().get('Cunard Lead').getRecordTypeId();
+        lead1.Contact_Reason__c = 'New Agent';
+        
+        insert lead1;
+        
+        Lead lead2 = new Lead();
+        lead2.FirstName = 'Arman';
+        lead2.LastName = 'Malik';
+        lead2.Company = 'Malik Pvt Ltd';
+        lead2.Status = 'New';
+        lead2.RecordTypeId =  Schema.SObjectType.Lead.getRecordTypeInfosByName().get('Princess Lead').getRecordTypeId();
+        lead2.Contact_Reason__c = 'New Agent';
+        
+        insert lead2;
+        
+        Lead lead3 = new Lead();
+        lead3.FirstName = 'Kiran';
+        lead3.LastName = 'Sharma';
+        lead3.Company = 'Kiran Pvt Ltd';
+        lead3.Status = 'New';
+        lead3.RecordTypeId = Schema.SObjectType.Lead.getRecordTypeInfosByName().get('Seabourn Lead').getRecordTypeId();
+        lead3.Contact_Reason__c = 'New Agent';
+        
+        insert lead3;
+        
+        Lead lead4 = new Lead();
+        lead4.FirstName = 'Shree';
+        lead4.LastName = 'Laxmi';
+        lead4.Company = 'Shree Pvt Ltd';
+        lead4.Status = 'New';
+        lead4.RecordTypeId = Schema.SObjectType.Lead.getRecordTypeInfosByName().get('Holland Lead').getRecordTypeId();
+        lead4.Contact_Reason__c = 'New Agent';
+        
+        insert lead4;
+        
+        String leadId = lead1.Id;
+        String check = QuickLeadConvert.convertIt(leadId);
+        Lead convertedLead =[SELECT Id ,LastName,Name,Company,Status, OwnerId, ConvertedContactId,ConvertedAccountId,ConvertedOpportunityId, RecordType__c, Contact_Reason__c FROM Lead WHERE Id =:leadId LIMIT 1];
+        String accId = convertedLead.ConvertedAccountId;
+        String conId = convertedLead.ConvertedContactId;
+        String leadRecordType = convertedLead.RecordType__c;
+        String contactReasonLead = convertedLead.Contact_Reason__c;
+        
+        
+        String leadId2 = lead2.Id;
+        String check2 = QuickLeadConvert.convertIt(leadId2);
+        Lead convertedLead2 =[SELECT Id ,LastName,Name,Company,Status, OwnerId, ConvertedContactId,ConvertedAccountId,ConvertedOpportunityId, RecordType__c, Contact_Reason__c FROM Lead WHERE Id =:leadId2 LIMIT 1];
+        String accId2 = convertedLead.ConvertedAccountId;
+        String conId2 = convertedLead.ConvertedContactId;
+        String leadRecordType2 = convertedLead.RecordType__c;
+        String contactReasonLead2 = convertedLead.Contact_Reason__c;
+        
+        System.equals(check2, accId2);
+        
+        String leadId3 = lead3.Id;
+        String check3 = QuickLeadConvert.convertIt(leadId3);
+        Lead convertedLead3 =[SELECT Id ,LastName,Name,Company,Status, OwnerId, ConvertedContactId,ConvertedAccountId,ConvertedOpportunityId, RecordType__c, Contact_Reason__c FROM Lead WHERE Id =:leadId3 LIMIT 1];
+        String accId3 = convertedLead.ConvertedAccountId;
+        String conId3 = convertedLead.ConvertedContactId;
+        String leadRecordType3 = convertedLead.RecordType__c;
+        String contactReasonLead3 = convertedLead.Contact_Reason__c;
+        
+        System.equals(check3, accId2);
+        
+        String leadId4 = lead4.Id;
+        String check4 = QuickLeadConvert.convertIt(leadId4);
+        Lead convertedLead4 =[SELECT Id ,LastName,Name,Company,Status, OwnerId, ConvertedContactId,ConvertedAccountId,ConvertedOpportunityId, RecordType__c, Contact_Reason__c FROM Lead WHERE Id =:leadId4 LIMIT 1];
+        String accId4 = convertedLead.ConvertedAccountId;
+        String conId4 = convertedLead.ConvertedContactId;
+        String leadRecordType4 = convertedLead.RecordType__c;
+        String contactReasonLead4 = convertedLead.Contact_Reason__c;
+        
+        System.equals(check4, accId2);
+        
+        Account convertedAccount = [SELECT Id, Name, Princess__c, Cunard__c, Holland__c, Seabourn__c, Brand__c FROM Account where Id =:accId];
+        Contact convertedContact = [SELECT Id, Name, Princess__c, Cunard__c, Holland__c, Seabourn__c, Brand__c, Contact_Reason__c FROM Contact where Id =:conId];
+        System.equals(check, accId);
+        
+
+        
+        
+
+    }
+
+}
