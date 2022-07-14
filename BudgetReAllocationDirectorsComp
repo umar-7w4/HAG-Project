@@ -1,0 +1,40 @@
+<aura:component   implements="force:appHostable,flexipage:availableForAllPageTypes,force:lightningQuickAction,force:hasRecordId" controller="BudgetReallocationDirectorsApex">
+    <aura:attribute name="remainingAmount" type="Decimal"/>
+    <aura:attribute name="salesuser" type="Boolean"/>
+    <aura:attribute name="directtransfer" type="Boolean"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+    
+    <h1 style="text-align:center;font-size:20px;">Select User and Enter Budget Amounts to transfer funds</h1>
+        <br/>
+    <lightning:recordEditForm  objectApiName="Budget__c">
+        <lightning:messages />
+        <div class="slds-grid slds-wrap slds-form-element" >
+            <div class="slds-col slds-size_6-of-12" style="margin-top:0.9rem;"  >
+                <lightning:inputField variant = "label-hidden" fieldName="User__c" aura:id="colors" />
+            </div>
+            <div class="slds-col slds-size_6-of-12" >
+                <lightning:input style="margin-left: 1rem;" type="Number" step=".01"  aura:id="amt"/>
+            </div>
+        </div>
+        <br/>
+        <br/>
+        <div>
+             <h1 style="text-align:center;font-size:20px;">Enter the comments</h1>
+             <lightning:input type="Text" aura:id="comment"/> 
+         </div>
+         <br/>
+         <br/>
+        <button class="slds-button slds-button_brand slds-align_absolute-center" aura:id="submitbutton"  onclick="{!c.myAction}">Save</button>
+    </lightning:recordEditForm>
+
+         <aura:html tag="style">
+   
+            .slds-modal__content{
+             	overflow-y: auto;
+                height : 400px !important;
+                max-height:unset !important;
+            }
+         </aura:html>
+
+</aura:component>
