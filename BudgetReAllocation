@@ -1,0 +1,90 @@
+public without sharing class BudgetReAllocationApex {
+    
+    @AuraEnabled
+    public static String getManagerId(String budgetId) {
+        
+        Id userId = [Select Id, OwnerId from Budget__c where Id = : budgetId].OwnerId;
+        System.debug(userId);
+        
+        User man = [SELECT Id, Name, ManagerId FROM User where Id =: userId];
+        return man.ManagerId;
+    }
+    
+    @AuraEnabled
+    public static String transferFunds(String budgetId, Double amount, String comments) {
+        System.debug(amount);
+        Budget__c bud = [Select Id, Automation_Date_Time__c, OwnerId, Name, Type__c, RecordType__c, Status__c, Year__c, Brand__c, CurrencyIsoCode, Amount__c, Total_Funds_Transferred_Out__c, Remaining_Budget__c, Total_Committed_Amount__c, Parent_Budget__c from Budget__c where Id =: budgetId];
+        User manager = [Select Id, Name, ManagerId from User where Id = : bud.OwnerId];
+        List<Budget__c> buds = [Select Id, Automation_Date_Time__c, Name, OwnerId, Type__c, Amount__c, Total_Funds_Transferred_In__c, Year__c, Status__c , RecordType__c, Parent_Budget__c from Budget__c where RecordType__c =: bud.RecordType__c AND OwnerId =: manager.ManagerId AND Type__c =: bud.Type__c AND Year__c =: bud.Year__c AND Status__c =: 'Approved'];
+        Funds_Transfer__c fund = new Funds_Transfer__c();
+        Double add1 = 0;
+        Double add2 = 0;
+        System.debug(buds);
+        if(buds.size()>0 && bud.Amount__c>=amount && comments!=null && comments != ''){
+            fund.Amount__c = amount;
+            fund.Sending_Budget__c = budgetId;
+            fund.Receiving_Budget__c = buds[0].Id;
+            fund.Sent_By__c = bud.OwnerId;
+            fund.Received_By__c = buds[0].OwnerId;
+            fund.Status__c = 'Complete';
+            fund.Comments__c = comments;
+            
+            bud.Automation_Date_Time__c = datetime.now();
+            buds[0].Automation_Date_Time__c = datetime.now();
+            
+            buds[0].Amount__c += amount;
+            
+            if(buds[0].Total_Funds_Transferred_In__c==null){
+                add1 = 0 + amount;
+            }
+            else{
+                add1 = buds[0].Total_Funds_Transferred_In__c + amount;
+            }
+            buds[0].Total_Funds_Transferred_In__c  = add1;
+            
+            bud.Amount__c -= amount;
+            
+            if(bud.Total_Funds_Transferred_Out__c==null){
+                add2 = 0 + amount;
+            }
+            else{
+                add2 = bud.Total_Funds_Transferred_Out__c+ amount;
+            }
+            bud.Total_Funds_Transferred_Out__c = add2;
+            
+
+        }
+        //System.debug(buds[0]);
+       // System.debug(bud);
+        try{
+            insert fund;
+            update buds;
+            update bud;
+        }
+        Catch(Exception e){
+            System.debug(e.getMessage());
+        }
+
+        return budgetId;
+
+    }
+    
+    @AuraEnabled    
+    public static Double getRemainingAmount(String budgetId){
+        return [Select Id, Name, Amount__c from Budget__c Where Id =: budgetId].Amount__c;
+    }
+    
+    @AuraEnabled    
+    public static boolean checkForManagerRecord(String budgetId){
+        Budget__c bud = [Select Id, OwnerId, Name, Type__c, RecordType__c, Status__c, Year__c, Brand__c, CurrencyIsoCode, Amount__c, Total_Funds_Transferred_Out__c, Remaining_Budget__c, Total_Committed_Amount__c, Parent_Budget__c from Budget__c where Id =: budgetId];
+        User manager = [Select Id, Name, ManagerId from User where Id = : bud.OwnerId];
+        List<Budget__c> buds = [Select Id, Name, OwnerId, Type__c, Amount__c, Total_Funds_Transferred_In__c, Year__c, Status__c , RecordType__c, Parent_Budget__c from Budget__c where RecordType__c =: bud.RecordType__c AND OwnerId =: manager.ManagerId AND Type__c =: bud.Type__c AND Year__c =: bud.Year__c AND Status__c =: 'Approved'];
+        if(buds.size()>0){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+    
+}
