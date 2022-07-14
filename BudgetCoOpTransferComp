@@ -1,0 +1,129 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,force:lightningQuickAction,force:hasRecordId" controller="BudgetFundsTrannsferCoOp" >
+	<aura:attribute name="options" type="List" />
+    <aura:attribute name="displaypicklist" type="boolean" default="true" />
+     <aura:attribute name="displaypath1" type="boolean"  />
+     <aura:attribute name="displaypath2" type="boolean"  />
+     <aura:attribute name="displaypath3" type="boolean"  />
+    <aura:attribute name="selectedValue" type="String"/>
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+    <aura:attribute name="remainingAmount" type="Decimal"/>
+    <aura:attribute name="directtransfer" type="Boolean"/>
+        
+     <aura:if isTrue="{!v.displaypicklist}">
+        
+        <lightning:select name="mySelect" aura:id="mySelect" value="{!v.selectedValue}">
+             <aura:iteration items="{!v.options}" var="item">
+                <option text="{!item.label}" value="{!item.value}" selected="{!item.selected}"/>
+            </aura:iteration>
+        </lightning:select>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <button class="slds-button slds-button_brand slds-align_absolute-center" aura:id="submitbutton"  onclick="{!c.doinit}">Next</button>
+         
+        <aura:set attribute="else">
+            <aura:if isTrue="{!v.displaypath1}"> 
+                
+                <h1 style="text-align:center;font-size:20px;">Select a Budget and Enter Budget Amounts to transfer funds</h1>
+                    <br/>
+                
+                
+                
+                <lightning:recordEditForm  objectApiName="Budget__c">
+                    <lightning:messages />
+                    <div class="slds-grid slds-wrap slds-form-element" >
+                        <div class="slds-col slds-size_6-of-12" style="margin-top:0.9rem;"  >
+                            <lightning:inputField variant = "label-hidden" fieldName="Funds_Transfer_Budget_Path1__c" aura:id="colors" />
+                        </div>
+                        <div class="slds-col slds-size_6-of-12" >
+                            <lightning:input style="margin-left: 1rem;" type="Number" step=".01" aura:id="amt"/>
+                        </div>
+                    </div>
+                    <br/>
+                    <br/>
+                     <div>
+                          <h1 style="text-align:center;font-size:20px;">Enter the comments</h1>
+                          <lightning:input type="Text" aura:id="comment"/> 
+                     </div>
+                     <br/>
+                     <br/>
+                    <button class="slds-button slds-button_brand slds-align_absolute-center" aura:id="submitbutton"  onclick="{!c.myAction}">Save</button>
+                </lightning:recordEditForm>
+                
+                
+                <aura:set attribute="else">
+                     <aura:if isTrue="{!v.displaypath2}"> 
+                        
+                        <h1 style="text-align:center;font-size:20px;">Select a Budget and Enter Budget Amounts to transfer funds</h1>
+                            <br/>
+                        <lightning:recordEditForm  objectApiName="Budget__c">
+                            <lightning:messages />
+                            <div class="slds-grid slds-wrap slds-form-element" >
+                                <div class="slds-col slds-size_6-of-12" style="margin-top:0.9rem;"  >
+                                    <lightning:inputField variant = "label-hidden" fieldName="Funds_Transfer_Budget_Path2__c" aura:id="colors" />
+                                </div>
+                                <div class="slds-col slds-size_6-of-12" >
+                                    <lightning:input style="margin-left: 1rem;" type="Number" step=".01" aura:id="amt"/>
+                                </div>
+                            </div>
+                            <br/>
+                            <br/>
+                            <div>
+                                <h1 style="text-align:center;font-size:20px;">Enter the comments</h1>
+                                <lightning:input type="Text" aura:id="comment"/> 
+                            </div>
+                            <br/>
+                            <br/>
+                            <button class="slds-button slds-button_brand slds-align_absolute-center" aura:id="submitbutton"  onclick="{!c.myAction}">Save</button>
+                        </lightning:recordEditForm>
+                        <aura:set attribute="else">
+                            <aura:if isTrue="{!v.displaypath3}"> 
+                                
+                                <h1 style="text-align:center;font-size:20px;">Select a User and Enter Budget Amounts to transfer funds</h1>
+                                    <br/>
+                                <lightning:recordEditForm  objectApiName="Budget__c">
+                                    <lightning:messages />
+                                    <div class="slds-grid slds-wrap slds-form-element" >
+                                        <div class="slds-col slds-size_6-of-12" style="margin-top:0.9rem;"  >
+                                            <lightning:inputField variant = "label-hidden" fieldName="User__c" aura:id="colors" />
+                                        </div>
+                                        <div class="slds-col slds-size_6-of-12" >
+                                            <lightning:input style="margin-left: 1rem;" type="Number" step=".01" aura:id="amt"/>
+                                        </div>
+                                    </div>
+                                    <br/>
+                                    <br/>
+                                     <div>
+                                         <h1 style="text-align:center;font-size:20px;">Enter the comments</h1>
+                                         <lightning:input type="Text" aura:id="comment"/> 
+                                     </div>
+                                     <br/>
+                                     <br/>
+                                    <button class="slds-button slds-button_brand slds-align_absolute-center" aura:id="submitbutton"  onclick="{!c.myAction}">Save</button>
+                                </lightning:recordEditForm>
+                                <aura:set attribute="else">
+                                    <p> </p>
+                                </aura:set>
+                                
+                            </aura:if> 
+                        </aura:set>
+                        
+                    </aura:if> 
+    	   		</aura:set>
+                
+            </aura:if> 
+    	</aura:set>
+         
+  	</aura:if> 
+    <aura:html tag="style">
+   
+    .slds-modal__content{
+         overflow-y: auto;
+         height : 400px !important;
+         max-height:unset !important;
+    }
+   </aura:html>
+
+</aura:component>
