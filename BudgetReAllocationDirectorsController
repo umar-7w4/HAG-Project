@@ -1,0 +1,228 @@
+({
+    init : function(component, event, helper) {
+
+        var action2 = component.get("c.getRemainingAmount");
+        console.log(component.get("v.recordId"));
+        action2.setParams({"budgetId": component.get("v.recordId")});
+        action2.setCallback(this, function(response){
+            console.log(response.getReturnValue());
+            var state = response.getState();
+            if(state == 'SUCCESS') {
+                component.set('v.remainingAmount', response.getReturnValue());
+            }
+        });
+        $A.enqueueAction(action2);
+        
+        var action = component.get("c.checkDirectTransfer");
+        console.log(component.get("v.recordId"));
+        action.setParams({"budgetId": component.get("v.recordId")});
+        action.setCallback(this, function(response){
+            console.log(response.getReturnValue());
+            var state = response.getState();
+            if(state == 'SUCCESS') {
+                component.set('v.directtransfer', response.getReturnValue());
+            }
+        });
+        $A.enqueueAction(action);
+	},
+    
+	myAction : function(component, event, helper) {
+        
+        var user = component.find("colors").get("v.value");
+        var amt = component.find("amt").get("v.value");
+        var comments = component.find("comment").get("v.value");
+        console.log(comments);
+        var trans = component.get('v.directtransfer');
+        var msg = '';
+        if(trans){
+            msg = 'Success: Funds Transfer has been transfered successfully.';
+        }
+        else{
+            msg = 'Success: Funds Transfer has been submitted for Approval.';
+        }
+        
+        var reAm = component.get('v.remainingAmount');
+        console.log(reAm);
+        
+        console.log(user);
+        console.log(amt);
+        console.log("===");
+        
+        var action1 = component.get("c.checkUserForDirector");
+        console.log(component.get("v.recordId"));
+        action1.setParams({"userId": user});
+        action1.setCallback(this, function(response){
+            console.log(response.getReturnValue());
+            var state = response.getState();
+            if(state == 'SUCCESS') {
+                if(response.getReturnValue()==true){
+                       var action3 = component.get("c.checkForManagerRecord");
+                       console.log(component.get("v.recordId"));
+                       action3.setParams({"budgetId": component.get("v.recordId"), "userId" : user});
+                       action3.setCallback(this, function(response){
+                             console.log(response.getReturnValue());
+                             var state = response.getState();
+                             if(state == 'SUCCESS') {
+                                  if(response.getReturnValue()==true){ 
+                                      var action = component.get("c.transferFunds");
+                                      action.setParams({"budgetId": component.get("v.recordId"), "amount": amt, "userId": user, comments : comments  });
+                                      action.setCallback(this, function(res) {
+                                           var response = res.getReturnValue();
+                                           console.log(response);
+                                           var state = action.getState();
+                                           if((component.isValid() && state == "SUCCESS") && amt<=reAm && comments !=null && comments !=''){
+                             
+                                                var toastEvent = $A.get("e.force:showToast");
+                                                toastEvent.setParams({
+                                                    title : 'Success',
+                                                    message: msg,
+                                                    type: 'success',
+                                                });
+                                                toastEvent.fire();
+                                                    
+                                                var navEvt = $A.get("e.force:navigateToSObject");
+                                                navEvt.setParams({
+                                                    "recordId": response,
+                                                    "slideDevName": "detail"
+                                                });
+                                                navEvt.fire();
+                                            } 
+                                           else if(comments==null || comments==''){
+                                                var toastEvent = $A.get("e.force:showToast");
+                                                toastEvent.setParams({
+                                                    title : 'Error',
+                                                    message:'Please enter the comments.',
+                                                    type: 'error',
+                                                });
+                                                toastEvent.fire();  
+                                           }
+                                            else if (amt>reAm) {
+                                                var toastEvent = $A.get("e.force:showToast");
+                                                toastEvent.setParams({
+                                                     title : 'Error',
+                                                     message:'Total Budget Amount exceeding Remaining Budget',
+                                                     type: 'error',
+                                                });
+                                                toastEvent.fire();
+                                             }
+                                             else if (state == "ERROR") {
+                                           }
+                                       });
+                                       $A.enqueueAction(action);
+                                                     
+                              	}
+                              else{
+                                 var toastEvent = $A.get("e.force:showToast");
+                                 toastEvent.setParams({
+                                     title : 'Error',
+                                     message:'There is no budget available to transfer money to. Please contact your supervisor or system administrator.',
+                                     type: 'error',
+                                 });
+                                 toastEvent.fire();  
+                              }
+                            }
+                       });
+                    $A.enqueueAction(action3);
+
+
+                   }
+                  else {
+                    var action2 = component.get("c.checkUserForSales");
+                    console.log(user);
+                    console.log(component.get("v.recordId"));
+                    action2.setParams({"userId" : user, "budgetId": component.get("v.recordId")});
+                    action2.setCallback(this, function(response){
+                        console.log(response.getReturnValue());
+                        var state = response.getState();
+                        if(state == 'SUCCESS') {
+                            if(response.getReturnValue()==true){
+                                var action3 = component.get("c.checkForManagerRecord");
+                                console.log(component.get("v.recordId"));
+                                action3.setParams({"budgetId": component.get("v.recordId"), "userId" : user});
+                                action3.setCallback(this, function(response){
+                                    console.log(response.getReturnValue());
+                                    var state = response.getState();
+                                    if(state == 'SUCCESS') {
+                                         if(response.getReturnValue()==true){ 
+                                                var action = component.get("c.transferFunds");
+                                                action.setParams({"budgetId": component.get("v.recordId"), "amount": amt, "userId": user, comments : comments  });
+                                                action.setCallback(this, function(res) {
+                                                var response = res.getReturnValue();
+                                                console.log(response);
+                                                var state = action.getState();
+                                                if((component.isValid() && state == "SUCCESS") && amt<=reAm && comments !=null && comments !=''){
+                             
+                                                   var toastEvent = $A.get("e.force:showToast");
+                                                   toastEvent.setParams({
+                                                        title : 'Success',
+                                                        message: 'Success: Funds Transfer has been transfered successfully.',
+                                                        type: 'success',
+                                                   });
+                                                   toastEvent.fire();
+                                                    
+                                                   var navEvt = $A.get("e.force:navigateToSObject");
+                                                   navEvt.setParams({
+                                                     "recordId": response,
+                                                     "slideDevName": "detail"
+                                                   });
+                                                   navEvt.fire();
+                                                 } 
+                                                else if(comments==null || comments==''){
+                                                    var toastEvent = $A.get("e.force:showToast");
+                                                    toastEvent.setParams({
+                                                        title : 'Error',
+                                                        message:'Please enter the comments.',
+                                                        type: 'error',
+                                                    });
+                                                    toastEvent.fire();  
+                                                }
+                                                 else if (amt>reAm) {
+                                                    var toastEvent = $A.get("e.force:showToast");
+                                                    toastEvent.setParams({
+                                                        title : 'Error',
+                                                        message:'Total Budget Amount exceeding Remaining Budget',
+                                                        type: 'error',
+                                                    });
+                                                    toastEvent.fire();
+                                                 }
+                                                 else if (state == "ERROR") {
+                                                 }
+                                              });
+                                          $A.enqueueAction(action);
+                                                     
+                                         }
+                                         else{
+                                             var toastEvent = $A.get("e.force:showToast");
+                                             toastEvent.setParams({
+                                                 title : 'Error',
+                                                 message:'There is no budget available to transfer money to. Please contact your supervisor or system administrator.',
+                                                 type: 'error',
+                                             });
+                                             toastEvent.fire();  
+                                         }
+                                    }
+                                });
+                                $A.enqueueAction(action3);
+                            }
+                            else {
+                                 var toastEvent = $A.get("e.force:showToast");
+                                 toastEvent.setParams({
+                                     title : 'Error',
+                                     message:'You are unable to transfer money to this user. Please contact your supervisor or administrator for assistance.',
+                                     type: 'error',
+                                 });
+                                 toastEvent.fire();            
+                            }
+                        }
+                    });
+                    $A.enqueueAction(action2);
+                }
+            }
+
+            
+        });
+        $A.enqueueAction(action1);
+        
+        
+     }    
+})
