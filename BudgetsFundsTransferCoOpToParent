@@ -1,0 +1,76 @@
+public without sharing class BudgetsFundsTransferCoOpToParent {
+    
+    @AuraEnabled    
+    public static boolean checkForParentRecord(String budgetId){
+        Id budId = [Select Id, OwnerId, Name, Type__c, RecordType__c, Status__c, Year__c, Brand__c, CurrencyIsoCode, Amount__c, Total_Funds_Transferred_Out__c, Remaining_Budget__c, Total_Committed_Amount__c, Parent_Budget__c from Budget__c where Id =: budgetId].Parent_Budget__c;
+        if(budId!=null){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+    
+        
+    @AuraEnabled
+    public static String transferFunds(String budgetId, Double amount ,  String comments) {
+        System.debug(amount);
+        Budget__c bud = [Select Id, Automation_Date_Time__c, OwnerId, Name, Type__c, RecordType__c, Status__c, Year__c, Brand__c, CurrencyIsoCode, Amount__c, Total_Funds_Transferred_Out__c, Remaining_Budget__c, Total_Committed_Amount__c, Parent_Budget__c from Budget__c where Id =: budgetId];
+        Funds_Transfer__c fund = new Funds_Transfer__c();
+        Budget__c parentBudget = new Budget__c();
+        Double add1 = 0;
+        Double add2 = 0;
+        if(checkForParentRecord(budgetId) && bud.Amount__c >= amount && comments !=null && comments !=''){
+            parentBudget = [Select Id, Automation_Date_Time__c, Name, OwnerId, Type__c, Amount__c, Total_Funds_Transferred_In__c, Year__c, Status__c , RecordType__c, Parent_Budget__c from Budget__c where Id = : bud.Parent_Budget__c ];
+            fund.Amount__c = amount;
+            fund.Sending_Budget__c = budgetId;
+            fund.Receiving_Budget__c = parentBudget.Id;
+            fund.Sent_By__c = bud.OwnerId;
+            fund.Received_By__c = parentBudget.OwnerId;
+            fund.Status__c = 'Complete';
+            fund.Comments__c = comments;
+            
+            parentBudget.Amount__c += amount;
+            
+            if(parentBudget.Total_Funds_Transferred_In__c==null){
+                add1 = 0 + amount;
+            }
+            else{
+                add1 = parentBudget.Total_Funds_Transferred_In__c + amount;
+            }
+            parentBudget.Total_Funds_Transferred_In__c  = add1;
+            
+            bud.Amount__c -= amount;
+            
+            if(bud.Total_Funds_Transferred_Out__c==null){
+                add2 = 0 + amount;
+            }
+            else{
+                add2 = bud.Total_Funds_Transferred_Out__c+ amount;
+            }
+            bud.Total_Funds_Transferred_Out__c = add2;
+            
+            bud.Automation_Date_Time__c = datetime.now();
+            parentBudget.Automation_Date_Time__c = datetime.now();
+        }
+        //System.debug(buds[0]);
+       // System.debug(bud);
+        try{
+            insert fund;
+            update parentBudget;
+            update bud;
+        }
+        Catch(Exception e){
+            System.debug(e.getMessage());
+        }
+
+        return budgetId;
+
+    }
+    
+    @AuraEnabled    
+    public static Double getRemainingAmount(String budgetId){
+        return [Select Id, Name, Amount__c from Budget__c Where Id =: budgetId].Amount__c;
+    }
+
+}
