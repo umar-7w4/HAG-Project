@@ -1,0 +1,168 @@
+@isTest
+public class BudgetFundsCoOpTest {
+    
+    @isTest
+    static void testMe(){
+        
+        Budget__c bud1 = new Budget__c();
+        bud1.Name = 'Budget 1';
+        bud1.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Parent Budget').getRecordTypeId();
+        bud1.Status__c = 'Approved';
+        bud1.Type__c = 'Co-Op Discretionary';
+        bud1.Amount__c = 100000;
+        bud1.OwnerId = [Select Id, Name from User where Name = 'Seabourn Test User'].Id;
+        bud1.Start_Date__c = System.today();
+        
+        insert bud1;
+        
+        Account c = new Account();
+        c.Name = 'Account 1';
+        insert c;
+        
+        Account_Plan__c ap = new Account_Plan__c();
+        ap.Agency__c  = c.Id;
+        ap.Rating__c  = 'A';
+        ap.Account_Status__c = 'Preferred';
+        ap.Classification__c = 'HP';
+        ap.Start_Date__c = System.today();
+        ap.Annual_Goal__c = 1000;
+        ap.Original_Goal__c  = 1000;
+        ap.Q1_Goal__c = 100;
+        ap.Q2_Goal__c = 100;
+        ap.Q3_Goal__c = 100;
+        ap.Q4_Goal__c = 100;
+        insert ap;
+
+
+        
+        Budget__c bud2 = new Budget__c();
+        bud2.Name = 'Budget 2';
+        bud2.Account_Plan__c = ap.Id;
+        bud2.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Co-Op Budget').getRecordTypeId();
+        bud2.Status__c = 'Approved';
+        bud2.Type__c = 'Co-Op';
+        bud2.Amount__c = 100;
+        bud2.OwnerId = [Select Id, Name from User where Name = 'Alycia Oliphant'].Id;
+        bud2.Start_Date__c = System.today();
+        
+        insert bud2;
+        
+        Budget__c bud3 = new Budget__c();
+        bud3.Name = 'Budget 3';
+        bud3.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Other Budget').getRecordTypeId();
+        bud3.Status__c = 'Approved';
+        bud3.Type__c = 'Co-Op Discretionary';
+        bud3.Amount__c = 100;
+        bud3.OwnerId = [Select Id, Name from User where Name = 'Alycia Oliphant'].Id;
+        bud3.Start_Date__c = System.today();
+        
+        insert bud3;
+        
+        Budget__c bud4 = new Budget__c();
+        bud4.Name = 'Budget 2';
+        bud4.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Parent Budget').getRecordTypeId();
+        bud4.Status__c = 'Approved';
+        bud4.Type__c = 'Co-Op';
+        bud4.Amount__c = 100;
+        bud4.OwnerId = [Select Id, Name from User where Name = 'Princess Test User'].Id;
+        bud4.Start_Date__c = System.today();
+        
+        insert bud4;
+        
+        Budget__c bud5 = new Budget__c();
+        bud5.Name = 'Budget 2';
+        bud5.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Parent Budget').getRecordTypeId();
+        bud5.Status__c = 'Approved';
+        bud5.Type__c = 'Co-Op';
+        bud5.Amount__c = 100;
+        bud5.OwnerId = [Select Id, Name from User where Name = 'Alycia Oliphant'].Id;
+        bud5.Start_Date__c = System.today();
+        
+        insert bud5;
+
+        
+        List<String> ids1 = new List<String>();
+        
+        //ids1.add('0055f000007vXrlAAE');
+        //ids1.add('0055f000009AFvMAAW');
+        //ids1.add('0055f000009AFvPAAW');
+        //ids1.add('0055f000009AFvhAAG');
+        //ids1.add('0055f000009AFvOAAW');
+        //ids1.add('0055f000009AFvVAAW');
+        ids1.add([Select Id, Name from User where Name = 'Seabourn Test User'].Id);
+        ids1.add([Select Id, Name from User where Name = 'Alycia Oliphant'].Id);
+        ids1.add([Select Id, Name from User where Name = 'Amanda Jordan'].Id);
+        ids1.add([Select Id, Name from User where Name = 'Cunard Test User'].Id);
+        
+        // (0055f000007vXrlAAE, 0055f000009AFvMAAW, 0055f000009AFvPAAW, 0055f000009AFvhAAG, 0055f000009AFvOAAW, 0055f000009AFvVAAW)
+       // System.assertEquals(ids1, BudgetReallocationDirectorsApex.getRoleSubordinateUsers([Select Id, Name from User where Name = 'Seabourn Test User'].Id) );
+        System.assertEquals(true, BudgetFundsTrannsferCoOp.checkForTransferPath1(100, bud1.Id, bud2.Id) );
+        System.assertEquals(bud1.Id, BudgetFundsTrannsferCoOp.transferFundsPath1(100, bud1.Id, bud2.Id,'Thanks'));
+        //System.assertEquals(true, BudgetFundsTrannsferCoOp.checkForTransferPath2(100, bud1.Id, bud2.Id) );
+        System.assertEquals(bud1.Id, BudgetFundsTrannsferCoOp.transferFundsPath2(100, bud1.Id, bud3.Id,'Thanks'));
+        
+        //System.assertEquals(true, BudgetFundsTrannsferCoOp.checkUserForDirector([Select Id, Name from User where Name = 'Seabourn Test User'].Id));
+        //System.assertEquals(true, BudgetFundsTrannsferCoOp.checkForTransferPath3(bud1.Id, 100,  [Select Id, Name from User where Name = 'Cunard Test User'].Id));
+        //System.assertEquals(bud1.Id, BudgetFundsTrannsferCoOp.transferFundsPath3(bud1.Id, 100,  [Select Id, Name from User where Name = 'Cunard Test User'].Id));
+        System.assertEquals(bud4.Id, BudgetFundsTrannsferCoOp.transferFundsPath3(bud4.Id, 100,  [Select Id, Name from User where Name = 'Alycia Oliphant'].Id, 'Thanks'));
+        //System.assertEquals(bud4.Id, BudgetFundsTrannsferCoOp.transferFundsPath3(bud4.Id, 100,  [Select Id, Name from User where Name = 'Alycia Oliphant'].Id));
+        
+         Budget__c bud6 = new Budget__c();
+        bud6.Name = 'Budget 2';
+        bud6.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Parent Budget').getRecordTypeId();
+        bud6.Status__c = 'Approved';
+        bud6.Type__c = 'Co-Op';
+        bud6.Amount__c = 100;
+        bud6.OwnerId = [Select Id, Name from User where Name = 'Holland Test User'].Id;
+        bud6.Start_Date__c = System.today();
+        
+        insert bud6;
+        
+        Budget__c bud7 = new Budget__c();
+        bud7.Name = 'Budget 2';
+        bud7.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Princess Parent Budget').getRecordTypeId();
+        bud7.Status__c = 'Approved';
+        bud7.Type__c = 'Co-Op';
+        bud7.Amount__c = 100;
+        bud7.OwnerId = [Select Id, Name from User where Name = 'Alycia Oliphant'].Id;
+        bud7.Start_Date__c = System.today();
+        
+        
+        Test.startTest();
+        System.assertEquals(bud6.Id, BudgetFundsTrannsferCoOp.transferFundsPath3(bud6.Id, 100,  [Select Id, Name from User where Name = 'Alycia Oliphant'].Id, 'Thanks'));
+        Test.stopTest();
+    }
+    
+        @isTest
+    static void testMe1(){
+        
+                  Budget__c bud8 = new Budget__c();
+        bud8.Name = 'Budget 8';
+        bud8.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Seabourn Parent Budget').getRecordTypeId();
+        bud8.Status__c = 'Approved';
+        bud8.Type__c = 'Co-Op';
+        bud8.Amount__c = 100000;
+        bud8.OwnerId = [Select Id, Name from User where Name = 'Nathan Burdulis'].Id;
+        bud8.Start_Date__c = System.today();
+        
+        insert bud8;
+        
+        Budget__c bud9 = new Budget__c();
+        bud9.Name = 'Budget 9';
+        bud9.RecordTypeId = Schema.SObjectType.Budget__c.getRecordTypeInfosByName().get('Seabourn Parent Budget').getRecordTypeId();
+        bud9.Status__c = 'Approved';
+        bud9.Type__c = 'Co-Op';
+        bud9.Amount__c = 100000;
+        bud9.OwnerId = [Select Id, Name from User where Name = 'Seabourn Test User'].Id;
+        bud9.Start_Date__c = System.today();
+        
+        insert bud9;
+        
+        Test.startTest();
+        System.assertEquals(bud9.Id, BudgetFundsTrannsferCoOp.transferFundsPath3(bud9.Id, 10 , [Select Id, Name from User where Name = 'Nathan Burdulis'].Id, 'Thanks'));
+        //Test.stopTest();
+        
+        Test.stopTest();
+    }
+
+}
